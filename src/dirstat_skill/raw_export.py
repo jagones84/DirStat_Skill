@@ -3,8 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from safe_delete_advisor.models import NormalizedNode, ParsedExport
-from safe_delete_advisor.ncdu_json import parse_ncdu_payload
+from dirstat_skill.models import NormalizedNode, ParsedExport
+from dirstat_skill.ncdu_json import parse_ncdu_payload
 
 
 def load_raw_export(export_path: Path) -> dict[str, object]:
@@ -51,3 +51,4 @@ def _parse_windows_export_payload(payload: dict[str, object]) -> ParsedExport:
 
     root_path = ", ".join(normalized_roots) if normalized_roots else "windows-native"
     return ParsedExport(root_path=root_path, nodes=nodes)
+

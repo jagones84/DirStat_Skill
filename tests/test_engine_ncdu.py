@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from safe_delete_advisor.engine_ncdu import build_ncdu_export_command, detect_ncdu
-from safe_delete_advisor.raw_export import load_raw_export
+from dirstat_skill.engine_ncdu import build_ncdu_export_command, detect_ncdu
+from dirstat_skill.raw_export import load_raw_export
 
 
 def test_detect_ncdu_returns_none_when_binary_missing() -> None:
@@ -31,3 +31,4 @@ def test_load_raw_export_wraps_ncdu_payload() -> None:
 
     assert payload["engine"] == "ncdu"
     assert isinstance(payload["payload"], list)
+

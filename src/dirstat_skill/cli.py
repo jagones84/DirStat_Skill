@@ -7,23 +7,23 @@ import platform
 import subprocess
 from pathlib import Path
 
-from safe_delete_advisor.config import load_settings
-from safe_delete_advisor.engine_ncdu import build_ncdu_export_command, detect_ncdu
-from safe_delete_advisor.engine_windows import build_windows_export_for_targets
-from safe_delete_advisor.logging_utils import configure_run_logger
-from safe_delete_advisor.reporting import (
-    build_deletion_candidates,
+from dirstat_skill.config import load_settings
+from dirstat_skill.engine_ncdu import build_ncdu_export_command, detect_ncdu
+from dirstat_skill.engine_windows import build_windows_export_for_targets
+from dirstat_skill.logging_utils import configure_run_logger
+from dirstat_skill.reporting import (
     build_top_lists,
-    render_deletion_report,
+    build_review_candidates,
+    render_review_report,
     select_dominant_candidates_for_roots,
-    write_deletion_candidates_csv,
+    write_review_candidates_csv,
 )
-from safe_delete_advisor.raw_export import parse_export
-from safe_delete_advisor.targets import normalize_targets
+from dirstat_skill.raw_export import parse_export
+from dirstat_skill.targets import normalize_targets
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="safe-delete-advisor-skill")
+    parser = argparse.ArgumentParser(prog="DirStat_Skill")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     scan = subparsers.add_parser("scan")
@@ -82,7 +82,7 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
         dominant_percent=settings.dominant_percent,
         min_candidate_bytes=settings.min_candidate_bytes,
     )
-    candidates = build_deletion_candidates(
+    candidates = build_review_candidates(
         selected_nodes=selected_nodes,
         all_nodes=parsed.nodes,
         protected_prefixes=settings.risk_do_not_touch_prefixes
@@ -116,9 +116,9 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
         json.dumps([candidate.__dict__ for candidate in candidates], indent=2),
         encoding="utf-8",
     )
-    write_deletion_candidates_csv(output_dir / "deletion_candidates.csv", candidates)
-    (output_dir / "deletion_report.md").write_text(
-        render_deletion_report(parsed.root_path, candidates),
+    write_review_candidates_csv(output_dir / "review_candidates.csv", candidates)
+    (output_dir / "review_report.md").write_text(
+        render_review_report(parsed.root_path, candidates),
         encoding="utf-8",
     )
     return 0
@@ -134,6 +134,7 @@ def _scan(
     output_dir.mkdir(parents=True, exist_ok=True)
     logger = configure_run_logger(output_dir / "run.log")
     engine_name = _resolve_engine_name(settings, requested_engine)
+    _validate_runtime_contract(engine_name=engine_name, paths=paths)
     platform_name = "windows" if engine_name == "windows-native" else "linux"
     targets = normalize_targets(
         requested_paths=paths,
@@ -202,5 +203,29 @@ def _resolve_engine_name(settings: object, requested_engine: str | None) -> str:
     return settings.default_engine_linux
 
 
+def _validate_runtime_contract(engine_name: str, paths: list[str]) -> None:
+    system_name = platform.system().lower()
+    has_windows_path = any(":\\" in path or path.startswith("\\\\") for path in paths)
+    has_linux_path = any(path.startswith("/") for path in paths)
+
+    if engine_name == "windows-native" and system_name != "windows":
+        raise ValueError(
+            "windows-native can run only on Windows. Run DirStat_Skill on a Windows host, then move only the compact outputs if you need remote review."
+        )
+    if engine_name == "ncdu" and has_windows_path:
+        raise ValueError(
+            "Windows-style paths require the Windows runtime. Run DirStat_Skill on Windows for that target."
+        )
+    if engine_name == "ncdu" and system_name == "windows":
+        raise ValueError(
+            "ncdu is a Linux engine. Run DirStat_Skill on Linux, or use the native Windows runtime on Windows."
+        )
+    if engine_name == "windows-native" and has_linux_path:
+        raise ValueError(
+            "Linux-style paths require a Linux runtime. Run DirStat_Skill on the Linux host that owns that filesystem."
+        )
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
+

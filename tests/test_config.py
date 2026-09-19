@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from safe_delete_advisor.config import load_settings
+from dirstat_skill.config import load_settings
 
 
 def test_load_settings_reads_defaults_and_overrides(tmp_path: Path) -> None:
@@ -65,3 +65,4 @@ def test_load_settings_reads_recursive_reporting_defaults(tmp_path: Path) -> Non
     assert settings.min_candidate_bytes == 2097152
     assert settings.max_nearby_reference_files == 5
     assert settings.nearby_reference_extensions == [".json", ".yaml", ".yml"]
+

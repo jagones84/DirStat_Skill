@@ -32,13 +32,12 @@ class RawExportMetadata:
 
 
 @dataclass(frozen=True)
-class DeletionCandidate:
+class ReviewCandidate:
     path: str
     dsize: int
     is_dir: bool
-    risk: str
-    candidate_reason: str
+    bucket: str
+    review_reason: str
     dependency_check_summary: str
     dependency_check_confidence: str
-    recommended_action: str
     selection_source: str

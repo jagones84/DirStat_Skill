@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from safe_delete_advisor.models import NormalizedNode
-from safe_delete_advisor.reporting import (
-    build_deletion_candidates,
+from dirstat_skill.models import NormalizedNode
+from dirstat_skill.reporting import (
+    build_review_candidates,
     build_top_lists,
-    render_deletion_report,
+    render_review_report,
     select_dominant_candidates,
 )
 
@@ -115,7 +115,7 @@ def test_select_dominant_candidates_for_roots_preserves_single_posix_root_tree()
     assert [item.path for item in selected] == ["/home/model.gguf"]
 
 
-def test_build_deletion_candidates_adds_reason_and_dependency_summary(tmp_path: Path) -> None:
+def test_build_review_candidates_adds_reason_and_dependency_summary(tmp_path: Path) -> None:
     cache_dir = tmp_path / ".cache"
     cache_dir.mkdir()
     blob_path = cache_dir / "blob.bin"
@@ -125,7 +125,7 @@ def test_build_deletion_candidates_adds_reason_and_dependency_summary(tmp_path: 
         NormalizedNode(path=str(blob_path), name="blob.bin", is_dir=False, asize=0, dsize=2000),
     ]
 
-    candidates = build_deletion_candidates(
+    candidates = build_review_candidates(
         selected_nodes=nodes,
         all_nodes=nodes,
         protected_prefixes=["/etc", "/usr", "/var/lib"],
@@ -134,17 +134,17 @@ def test_build_deletion_candidates_adds_reason_and_dependency_summary(tmp_path: 
         max_nearby_reference_files=5,
     )
 
-    assert candidates[0].candidate_reason
+    assert candidates[0].review_reason
     assert "cache" in candidates[0].dependency_check_summary.lower()
-    assert candidates[0].recommended_action == "delete first"
+    assert candidates[0].bucket == "review first"
 
 
-def test_build_deletion_candidates_marks_system_storage_as_do_not_touch() -> None:
+def test_build_review_candidates_marks_system_storage_as_keep_protected() -> None:
     nodes = [
         NormalizedNode(path="/var/lib/docker-loop.xfs", name="docker-loop.xfs", is_dir=False, asize=0, dsize=2000),
     ]
 
-    candidates = build_deletion_candidates(
+    candidates = build_review_candidates(
         selected_nodes=nodes,
         all_nodes=nodes,
         protected_prefixes=["/etc", "/usr", "/var/lib"],
@@ -153,11 +153,11 @@ def test_build_deletion_candidates_marks_system_storage_as_do_not_touch() -> Non
         max_nearby_reference_files=5,
     )
 
-    assert candidates[0].recommended_action == "do not touch"
+    assert candidates[0].bucket == "keep protected"
     assert "protected" in candidates[0].dependency_check_summary.lower()
 
 
-def test_build_deletion_candidates_marks_user_model_without_nearby_refs_as_inspect(
+def test_build_review_candidates_marks_user_model_without_nearby_refs_as_review_carefully(
     tmp_path: Path,
 ) -> None:
     model_dir = tmp_path / "models"
@@ -169,7 +169,7 @@ def test_build_deletion_candidates_marks_user_model_without_nearby_refs_as_inspe
         NormalizedNode(path=str(model_path), name="model.gguf", is_dir=False, asize=0, dsize=2000),
     ]
 
-    candidates = build_deletion_candidates(
+    candidates = build_review_candidates(
         selected_nodes=nodes,
         all_nodes=nodes,
         protected_prefixes=["/etc", "/usr", "/var/lib"],
@@ -178,14 +178,14 @@ def test_build_deletion_candidates_marks_user_model_without_nearby_refs_as_inspe
         max_nearby_reference_files=5,
     )
 
-    assert candidates[0].recommended_action == "inspect before delete"
+    assert candidates[0].bucket == "review carefully"
     assert "no nearby references" in candidates[0].dependency_check_summary.lower()
 
 
-def test_render_deletion_report_groups_candidates_by_action(tmp_path: Path) -> None:
+def test_render_review_report_groups_candidates_by_bucket(tmp_path: Path) -> None:
     model_path = tmp_path / "model.gguf"
     model_path.write_bytes(b"x")
-    candidates = build_deletion_candidates(
+    candidates = build_review_candidates(
         selected_nodes=[
             NormalizedNode(path=str(model_path), name="model.gguf", is_dir=False, asize=0, dsize=2000)
         ],
@@ -198,8 +198,33 @@ def test_render_deletion_report_groups_candidates_by_action(tmp_path: Path) -> N
         max_nearby_reference_files=5,
     )
 
-    report = render_deletion_report(root_path=str(tmp_path), candidates=candidates)
+    report = render_review_report(root_path=str(tmp_path), candidates=candidates)
 
-    assert "# Deletion Report" in report
-    assert "## Inspect Before Delete" in report
+    assert "# Review Report" in report
+    assert "## Review Carefully" in report
     assert str(model_path) in report
+
+
+def test_render_review_report_uses_only_review_buckets(tmp_path: Path) -> None:
+    cache_path = tmp_path / ".cache" / "blob.bin"
+    cache_path.parent.mkdir()
+    cache_path.write_bytes(b"x")
+    candidates = build_review_candidates(
+        selected_nodes=[
+            NormalizedNode(path=str(cache_path), name="blob.bin", is_dir=False, asize=0, dsize=2000)
+        ],
+        all_nodes=[
+            NormalizedNode(path=str(cache_path), name="blob.bin", is_dir=False, asize=0, dsize=2000)
+        ],
+        protected_prefixes=["/etc", "/usr", "/var/lib"],
+        inspection_prefixes=[str(tmp_path)],
+        nearby_reference_extensions=[".json"],
+        max_nearby_reference_files=5,
+    )
+
+    report = render_review_report(root_path=str(tmp_path), candidates=candidates)
+
+    assert "# Review Report" in report
+    assert "review first" in report.lower()
+    assert "review_bucket" in report
+

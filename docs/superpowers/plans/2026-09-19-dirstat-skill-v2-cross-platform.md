@@ -1,4 +1,4 @@
-# safe-delete-advisor-skill v2 Cross-Platform Implementation Plan
+# DirStat_Skill v2 Cross-Platform Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -12,62 +12,62 @@
 
 ## File Structure
 
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_base.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\engine_base.py`
   - shared engine protocol, target dataclasses, raw export metadata
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_windows.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\engine_windows.py`
   - native Windows scanner using `os.scandir()` and `shutil.disk_usage()`
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\targets.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\targets.py`
   - target parsing, drive discovery, path validation
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\logging_utils.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\logging_utils.py`
   - structured per-run log formatting and file logger setup
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\raw_export.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\raw_export.py`
   - raw export loading and engine dispatch for normalization
-- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_targets.py`
+- Create: `Z:\Repositories\DirStat_Skill\tests\test_targets.py`
   - path and platform target tests
-- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_engine_windows.py`
+- Create: `Z:\Repositories\DirStat_Skill\tests\test_engine_windows.py`
   - Windows engine unit tests
-- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\fixtures\windows_tree_export.json`
+- Create: `Z:\Repositories\DirStat_Skill\tests\fixtures\windows_tree_export.json`
   - small Windows raw export fixture
-- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\fixtures\linux_generic_export.json`
+- Create: `Z:\Repositories\DirStat_Skill\tests\fixtures\linux_generic_export.json`
   - small generic raw export fixture if needed by shared loader tests
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\models.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\models.py`
   - add cross-platform raw export metadata and normalized scan result types
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_ncdu.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\engine_ncdu.py`
   - adapt current Linux engine to shared engine interface
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\ncdu_json.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\ncdu_json.py`
   - integrate shared raw export loader path
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\risk.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\risk.py`
   - split platform-aware safety rules
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\reporting.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\reporting.py`
   - keep output contract stable while accepting generic raw metadata
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\config.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\config.py`
   - extend settings for engine and platform rule configuration
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\cli.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\cli.py`
   - replace Linux-only CLI with `scan`, `summarize-export`, `audit`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\config\defaults.json`
+- Modify: `Z:\Repositories\DirStat_Skill\config\defaults.json`
   - add Windows danger zones and shared defaults
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_config.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_engine_ncdu.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_reporting.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_cli.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\README.md`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_config.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_engine_ncdu.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_reporting.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_cli.py`
+- Modify: `Z:\Repositories\DirStat_Skill\README.md`
   - rewrite as global Windows+Linux repo
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\AGENTS.md`
+- Modify: `Z:\Repositories\DirStat_Skill\AGENTS.md`
   - point agents to generic workflow
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\skills\safe-delete-advisor-skill\SKILL.md`
+- Modify: `Z:\Repositories\DirStat_Skill\skills\DirStat_Skill\SKILL.md`
   - generic skill workflow for Windows and Linux
-- Move: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\*.sh` -> `Z:\Repositories\safe-delete-advisor-skill\scripts\linux\*.sh`
+- Move: `Z:\Repositories\DirStat_Skill\scripts\dgx\*.sh` -> `Z:\Repositories\DirStat_Skill\scripts\linux\*.sh`
   - keep Linux helpers but stop branding them as DGX-only
 
 ### Task 1: Introduce Shared Engine And Target Abstractions
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_base.py`
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\targets.py`
-- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_targets.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\models.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\config.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_config.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\engine_base.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\targets.py`
+- Create: `Z:\Repositories\DirStat_Skill\tests\test_targets.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\models.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\config.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_config.py`
 
 - [ ] **Step 1: Write the failing target tests**
 
@@ -76,7 +76,7 @@ from pathlib import Path
 
 import pytest
 
-from safe_delete_advisor.targets import ScanTarget, normalize_targets
+from dirstat_skill.targets import ScanTarget, normalize_targets
 
 
 def test_normalize_targets_keeps_multiple_explicit_paths() -> None:
@@ -101,7 +101,7 @@ def test_normalize_targets_rejects_empty_request_when_auto_discover_disabled() -
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `python -m pytest tests/test_targets.py -v`
-Expected: FAIL with `ModuleNotFoundError` or missing symbol errors for `safe_delete_advisor.targets`
+Expected: FAIL with `ModuleNotFoundError` or missing symbol errors for `dirstat_skill.targets`
 
 - [ ] **Step 3: Write minimal shared abstractions**
 
@@ -177,24 +177,24 @@ Expected: PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/safe_delete_advisor/engine_base.py src/safe_delete_advisor/targets.py src/safe_delete_advisor/models.py src/safe_delete_advisor/config.py config/defaults.json tests/test_targets.py tests/test_config.py
+git add src/dirstat_skill/engine_base.py src/dirstat_skill/targets.py src/dirstat_skill/models.py src/dirstat_skill/config.py config/defaults.json tests/test_targets.py tests/test_config.py
 git commit -m "feat: add shared scan target abstractions"
 ```
 
 ### Task 2: Add Native Windows Scan Engine
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_windows.py`
-- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_engine_windows.py`
-- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\fixtures\windows_tree_export.json`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\models.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\engine_windows.py`
+- Create: `Z:\Repositories\DirStat_Skill\tests\test_engine_windows.py`
+- Create: `Z:\Repositories\DirStat_Skill\tests\fixtures\windows_tree_export.json`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\models.py`
 
 - [ ] **Step 1: Write the failing Windows engine tests**
 
 ```python
 from pathlib import Path
 
-from safe_delete_advisor.engine_windows import build_windows_export
+from dirstat_skill.engine_windows import build_windows_export
 
 
 def test_build_windows_export_writes_raw_json(tmp_path: Path) -> None:
@@ -215,7 +215,7 @@ def test_build_windows_export_writes_raw_json(tmp_path: Path) -> None:
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `python -m pytest tests/test_engine_windows.py -v`
-Expected: FAIL with `ModuleNotFoundError` for `safe_delete_advisor.engine_windows`
+Expected: FAIL with `ModuleNotFoundError` for `dirstat_skill.engine_windows`
 
 - [ ] **Step 3: Write minimal Windows engine**
 
@@ -279,24 +279,24 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/safe_delete_advisor/engine_windows.py tests/test_engine_windows.py tests/fixtures/windows_tree_export.json src/safe_delete_advisor/models.py
+git add src/dirstat_skill/engine_windows.py tests/test_engine_windows.py tests/fixtures/windows_tree_export.json src/dirstat_skill/models.py
 git commit -m "feat: add native windows scan engine"
 ```
 
 ### Task 3: Refactor Linux `ncdu` Engine Behind Shared Interface
 
 **Files:**
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_ncdu.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_engine_ncdu.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\ncdu_json.py`
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\raw_export.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\engine_ncdu.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_engine_ncdu.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\ncdu_json.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\raw_export.py`
 
 - [ ] **Step 1: Write the failing shared raw export loader tests**
 
 ```python
 from pathlib import Path
 
-from safe_delete_advisor.raw_export import load_raw_export
+from dirstat_skill.raw_export import load_raw_export
 
 
 def test_load_raw_export_reads_windows_engine_payload() -> None:
@@ -363,18 +363,18 @@ Expected: PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/safe_delete_advisor/raw_export.py src/safe_delete_advisor/engine_ncdu.py src/safe_delete_advisor/ncdu_json.py tests/test_engine_ncdu.py tests/test_cli.py
+git add src/dirstat_skill/raw_export.py src/dirstat_skill/engine_ncdu.py src/dirstat_skill/ncdu_json.py tests/test_engine_ncdu.py tests/test_cli.py
 git commit -m "refactor: unify linux raw export handling"
 ```
 
 ### Task 4: Replace Linux-Only CLI With Generic `scan`, `summarize-export`, And `audit`
 
 **Files:**
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\cli.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\reporting.py`
-- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\logging_utils.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_cli.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_reporting.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\cli.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\reporting.py`
+- Create: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\logging_utils.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_cli.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_reporting.py`
 
 - [ ] **Step 1: Write the failing CLI tests**
 
@@ -393,7 +393,7 @@ def test_cli_audit_command_writes_summary_bundle(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "safe_delete_advisor.cli",
+            "dirstat_skill.cli",
             "audit",
             "--path",
             str(target_root),
@@ -420,7 +420,7 @@ Expected: FAIL because the CLI only supports `summarize-export`
 - [ ] **Step 3: Write minimal generic CLI structure**
 
 ```python
-parser = argparse.ArgumentParser(prog="safe-delete-advisor-skill")
+parser = argparse.ArgumentParser(prog="DirStat_Skill")
 subparsers = parser.add_subparsers(dest="command", required=True)
 
 scan_parser = subparsers.add_parser("scan")
@@ -448,7 +448,7 @@ from pathlib import Path
 
 
 def configure_run_logger(log_path: Path) -> logging.Logger:
-    logger = logging.getLogger("safe_delete_advisor")
+    logger = logging.getLogger("dirstat_skill")
     logger.handlers.clear()
     logger.setLevel(logging.INFO)
 
@@ -466,37 +466,37 @@ Expected: PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add src/safe_delete_advisor/cli.py src/safe_delete_advisor/reporting.py src/safe_delete_advisor/logging_utils.py tests/test_cli.py tests/test_reporting.py
+git add src/dirstat_skill/cli.py src/dirstat_skill/reporting.py src/dirstat_skill/logging_utils.py tests/test_cli.py tests/test_reporting.py
 git commit -m "feat: add generic scan and audit cli"
 ```
 
 ### Task 5: Add Cross-Platform Risk Rules And Keep Output Contract Stable
 
 **Files:**
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\risk.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\tests\test_risk.py`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\reporting.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\risk.py`
+- Modify: `Z:\Repositories\DirStat_Skill\tests\test_risk.py`
+- Modify: `Z:\Repositories\DirStat_Skill\src\dirstat_skill\reporting.py`
 
 - [ ] **Step 1: Write the failing risk tests**
 
 ```python
-from safe_delete_advisor.risk import classify_path
+from dirstat_skill.risk import classify_path
 
 
-def test_classify_path_marks_windows_system_paths_as_do_not_touch() -> None:
+def test_classify_path_marks_windows_system_paths_as_keep_protected() -> None:
     assert classify_path(
         path="C:\\Windows\\System32",
-        do_not_touch_prefixes=["C:\\Windows", "C:\\Program Files"],
-        needs_inspection_prefixes=["C:\\Users"],
-    ) == "do not touch"
+        keep_protected_prefixes=["C:\\Windows", "C:\\Program Files"],
+        review_carefully_prefixes=["C:\\Users"],
+    ) == "keep protected"
 
 
-def test_classify_path_marks_windows_user_cache_as_delete_first() -> None:
+def test_classify_path_marks_windows_user_cache_as_review_first() -> None:
     assert classify_path(
         path="C:\\Users\\giova\\AppData\\Local\\Temp\\huge.tmp",
-        do_not_touch_prefixes=["C:\\Windows", "C:\\Program Files"],
-        needs_inspection_prefixes=["C:\\Users"],
-    ) == "delete first"
+        keep_protected_prefixes=["C:\\Windows", "C:\\Program Files"],
+        review_carefully_prefixes=["C:\\Users"],
+    ) == "review first"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -509,17 +509,17 @@ Expected: FAIL because Windows-specific buckets are not recognized yet
 ```python
 def classify_path(
     path: str,
-    do_not_touch_prefixes: list[str],
-    needs_inspection_prefixes: list[str],
+    keep_protected_prefixes: list[str],
+    review_carefully_prefixes: list[str],
 ) -> str:
     lowered = path.lower()
-    if any(lowered.startswith(prefix.lower()) for prefix in do_not_touch_prefixes):
-        return "do not touch"
+    if any(lowered.startswith(prefix.lower()) for prefix in keep_protected_prefixes):
+        return "keep protected"
     if "\\appdata\\local\\temp\\" in lowered or lowered.endswith(".filepart"):
-        return "delete first"
-    if any(lowered.startswith(prefix.lower()) for prefix in needs_inspection_prefixes):
-        return "inspect before delete"
-    return "delete first"
+        return "review first"
+    if any(lowered.startswith(prefix.lower()) for prefix in review_carefully_prefixes):
+        return "review carefully"
+    return "review first"
 ```
 
 - [ ] **Step 4: Verify the report writer still emits the same public files**
@@ -530,23 +530,23 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/safe_delete_advisor/risk.py src/safe_delete_advisor/reporting.py tests/test_risk.py tests/test_reporting.py
+git add src/dirstat_skill/risk.py src/dirstat_skill/reporting.py tests/test_risk.py tests/test_reporting.py
 git commit -m "feat: add cross-platform risk classification"
 ```
 
 ### Task 6: Move Linux Helper Scripts And Rewrite Public Docs
 
 **Files:**
-- Move: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\verify_ncdu.sh` -> `Z:\Repositories\safe-delete-advisor-skill\scripts\linux\verify_ncdu.sh`
-- Move: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\install_ncdu.sh` -> `Z:\Repositories\safe-delete-advisor-skill\scripts\linux\install_ncdu.sh`
-- Move: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\run_audit.sh` -> `Z:\Repositories\safe-delete-advisor-skill\scripts\linux\run_audit.sh`
-- Move: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\show_latest_audit.sh` -> `Z:\Repositories\safe-delete-advisor-skill\scripts\linux\show_latest_audit.sh`
-- Move: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\find_safe_candidates.sh` -> `Z:\Repositories\safe-delete-advisor-skill\scripts\linux\find_safe_candidates.sh`
-- Move: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\prepare_linux_scripts.sh` -> `Z:\Repositories\safe-delete-advisor-skill\scripts\linux\prepare_linux_scripts.sh`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\README.md`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\AGENTS.md`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\skills\safe-delete-advisor-skill\SKILL.md`
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\.gitignore`
+- Move: `Z:\Repositories\DirStat_Skill\scripts\dgx\verify_ncdu.sh` -> `Z:\Repositories\DirStat_Skill\scripts\linux\verify_ncdu.sh`
+- Move: `Z:\Repositories\DirStat_Skill\scripts\dgx\install_ncdu.sh` -> `Z:\Repositories\DirStat_Skill\scripts\linux\install_ncdu.sh`
+- Move: `Z:\Repositories\DirStat_Skill\scripts\dgx\run_audit.sh` -> `Z:\Repositories\DirStat_Skill\scripts\linux\run_audit.sh`
+- Move: `Z:\Repositories\DirStat_Skill\scripts\dgx\show_latest_audit.sh` -> `Z:\Repositories\DirStat_Skill\scripts\linux\show_latest_audit.sh`
+- Move: `Z:\Repositories\DirStat_Skill\scripts\dgx\find_safe_candidates.sh` -> `Z:\Repositories\DirStat_Skill\scripts\linux\find_safe_candidates.sh`
+- Move: `Z:\Repositories\DirStat_Skill\scripts\dgx\prepare_linux_scripts.sh` -> `Z:\Repositories\DirStat_Skill\scripts\linux\prepare_linux_scripts.sh`
+- Modify: `Z:\Repositories\DirStat_Skill\README.md`
+- Modify: `Z:\Repositories\DirStat_Skill\AGENTS.md`
+- Modify: `Z:\Repositories\DirStat_Skill\skills\DirStat_Skill\SKILL.md`
+- Modify: `Z:\Repositories\DirStat_Skill\.gitignore`
 
 - [ ] **Step 1: Write the failing documentation checks**
 
@@ -562,7 +562,7 @@ def test_readme_mentions_windows_and_linux() -> None:
 
 
 def test_skill_points_to_generic_commands() -> None:
-    skill_text = Path("skills/safe-delete-advisor-skill/SKILL.md").read_text(encoding="utf-8")
+    skill_text = Path("skills/DirStat_Skill/SKILL.md").read_text(encoding="utf-8")
     assert "scripts/linux/" in skill_text
     assert "audit --path" in skill_text
 ```
@@ -582,8 +582,8 @@ Expected: FAIL because docs still describe a Linux-first workflow and `scripts/d
 
 ## Example Commands
 
-- Windows: `python -m safe_delete_advisor.cli audit --path C:\ --output-dir outputs\sample`
-- Linux: `python3 -m safe_delete_advisor.cli audit --path /home --engine ncdu --output-dir outputs/sample`
+- Windows: `python -m dirstat_skill.cli audit --path C:\ --output-dir outputs\sample`
+- Linux: `python3 -m dirstat_skill.cli audit --path /home --engine ncdu --output-dir outputs/sample`
 ```
 
 ```markdown
@@ -591,7 +591,7 @@ Expected: FAIL because docs still describe a Linux-first workflow and `scripts/d
 
 - `README.md`
 - `AGENTS.md`
-- `skills/safe-delete-advisor-skill/SKILL.md`
+- `skills/DirStat_Skill/SKILL.md`
 - `scripts/linux/*.sh` for Linux-only helpers
 ```
 
@@ -603,16 +603,16 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add scripts/linux README.md AGENTS.md skills/safe-delete-advisor-skill/SKILL.md .gitignore
+git add scripts/linux README.md AGENTS.md skills/DirStat_Skill/SKILL.md .gitignore
 git commit -m "docs: publish one cross-platform skill workflow"
 ```
 
 ### Task 7: Verify On Windows And Linux ARM64
 
 **Files:**
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\README.md`
+- Modify: `Z:\Repositories\DirStat_Skill\README.md`
   - add verified commands and observed behavior
-- Modify: `Z:\Repositories\safe-delete-advisor-skill\skills\safe-delete-advisor-skill\SKILL.md`
+- Modify: `Z:\Repositories\DirStat_Skill\skills\DirStat_Skill\SKILL.md`
   - update quick reference after real verification
 
 - [ ] **Step 1: Run the full local test suite**
@@ -622,7 +622,7 @@ Expected: PASS
 
 - [ ] **Step 2: Run Windows verification on at least one local system drive**
 
-Run: `python -m safe_delete_advisor.cli audit --path C:\ --output-dir outputs\win_c_audit`
+Run: `python -m dirstat_skill.cli audit --path C:\ --output-dir outputs\win_c_audit`
 Expected:
 - `outputs\win_c_audit\summary.md`
 - `outputs\win_c_audit\top_dirs.csv`
@@ -632,17 +632,17 @@ Expected:
 
 - [ ] **Step 3: Run Windows verification on a second volume if available**
 
-Run: `python -m safe_delete_advisor.cli audit --path D:\ --output-dir outputs\win_d_audit`
+Run: `python -m dirstat_skill.cli audit --path D:\ --output-dir outputs\win_d_audit`
 Expected: same output bundle as Step 2
 
 - [ ] **Step 4: Run Linux helper verification on DGX**
 
-Run: `ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/prepare_linux_scripts.sh`
+Run: `ssh dgx bash /home/jagones/Repositories/DirStat_Skill/scripts/linux/prepare_linux_scripts.sh`
 Expected: `prepared_linux_scripts=yes`
 
 - [ ] **Step 5: Run Linux audit verification on DGX**
 
-Run: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/run_audit.sh`
+Run: `ssh dgx /home/jagones/Repositories/DirStat_Skill/scripts/linux/run_audit.sh`
 Expected: a new dated output folder plus compact report bundle
 
 - [ ] **Step 6: Update README and SKILL with real verified commands and paths**
@@ -656,7 +656,7 @@ Expected: a new dated output folder plus compact report bundle
 - [ ] **Step 7: Commit**
 
 ```bash
-git add README.md skills/safe-delete-advisor-skill/SKILL.md
+git add README.md skills/DirStat_Skill/SKILL.md
 git commit -m "test: verify cross-platform audit workflow"
 ```
 
@@ -686,4 +686,5 @@ No spec requirement is left without a task.
 - `ScanTarget` defined in Task 1 and reused consistently
 - engine names fixed as `windows-native` and `ncdu`
 - CLI commands fixed as `scan`, `summarize-export`, and `audit`
-- public Python package remains `safe_delete_advisor`
+- public Python package remains `dirstat_skill`
+

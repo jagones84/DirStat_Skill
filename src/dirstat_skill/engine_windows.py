@@ -5,7 +5,7 @@ import json
 import os
 from pathlib import Path
 
-from safe_delete_advisor.targets import ScanTarget
+from dirstat_skill.targets import ScanTarget
 
 
 @dataclass(frozen=True)
@@ -101,3 +101,4 @@ def build_windows_export_for_targets(
     }
     output_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return WindowsExportResult(engine_name="windows-native", output_path=output_path)
+

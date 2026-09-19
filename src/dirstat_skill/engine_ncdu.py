@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 
-from safe_delete_advisor.models import EngineInfo
+from dirstat_skill.models import EngineInfo
 
 
 def detect_ncdu(path_entries: list[str] | None = None) -> EngineInfo | None:
@@ -30,3 +30,4 @@ def build_ncdu_export_command(
         command.extend(["--exclude", pattern])
     command.append(target.as_posix())
     return command
+

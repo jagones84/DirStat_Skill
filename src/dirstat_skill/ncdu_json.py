@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from safe_delete_advisor.models import NormalizedNode, ParsedExport
+from dirstat_skill.models import NormalizedNode, ParsedExport
 
 
 def parse_ncdu_export(export_path: Path) -> ParsedExport:
@@ -62,3 +62,4 @@ def _walk_directory(entry: list[object], current_path: str, nodes: list[Normaliz
     )
     nodes.extend(child_nodes)
     return total_dsize
+

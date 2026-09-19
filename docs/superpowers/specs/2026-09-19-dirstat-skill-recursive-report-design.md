@@ -1,8 +1,8 @@
-# safe-delete-advisor-skill Recursive Deletion Report Design
+# DirStat_Skill Recursive Review Report Design
 
 ## Goal
 
-Refactor the reporting stage so each audit run writes a complete deletion dossier under `outputs/` that explains which full paths are candidates for deletion, why they are candidates, and what dependency checks were performed before recommending them.
+Refactor the reporting stage so each audit run writes a complete review dossier under `outputs/` that explains which full paths deserve review, why they were selected, and what dependency checks were performed before assigning a review bucket.
 
 ## Problem
 
@@ -10,7 +10,7 @@ The current reporting layer is still shaped like a classic `top_n` summary:
 
 - it privileges the globally largest directories and files
 - it can miss many medium-size files that are individually below the top list but collectively dominate space
-- it does not emit a final human-readable document that clearly justifies each deletion recommendation
+- it does not emit a final human-readable document that clearly justifies each review recommendation
 - it does not record a dependency-check trace that explains why a path is treated as safe-ish, uncertain, or protected
 
 The next version must move from `top_n` ranking to a recursive, evidence-based candidate dossier.
@@ -24,7 +24,7 @@ This refactor applies to the report generation stage only. It must work with bot
 
 It remains strictly read-only:
 
-- no deletion
+- no file removal
 - no file mutation outside the chosen `outputs/<stamp>_audit/` bundle
 - no mandatory online or LLM dependency
 
@@ -37,30 +37,29 @@ Each audit run must continue to create a run folder under `outputs/<stamp>_audit
 - `top_dirs.csv`
 - `top_files.csv`
 - `candidates.json`
-- `deletion_candidates.csv`
-- `deletion_report.md`
+- `review_candidates.csv`
+- `review_report.md`
 - `run.log`
 
 Optional supporting artifacts may be added if they are useful and deterministic, but the files above are the required public contract.
 
 ## Required Candidate Fields
 
-Every candidate record in `candidates.json` and `deletion_candidates.csv` must include at least:
+Every candidate record in `candidates.json` and `review_candidates.csv` must include at least:
 
 - `path`
 - `dsize`
 - `is_dir`
-- `risk`
-- `candidate_reason`
+- `bucket`
+- `review_reason`
 - `dependency_check_summary`
 - `dependency_check_confidence`
-- `recommended_action`
 - `selection_source`
 
 ### Field Semantics
 
-- `candidate_reason`
-  - plain-language explanation of why this path is a deletion candidate
+- `review_reason`
+  - plain-language explanation of why this path is in the review dossier
   - examples:
     - `partial download file`
     - `trash subtree dominates 92% of parent space`
@@ -78,11 +77,11 @@ Every candidate record in `candidates.json` and `deletion_candidates.csv` must i
     - `high`
     - `medium`
     - `low`
-- `recommended_action`
+- `bucket`
   - allowed values:
-    - `delete first`
-    - `inspect before delete`
-    - `do not touch`
+    - `review first`
+    - `review carefully`
+    - `keep protected`
 - `selection_source`
   - shows how the candidate entered the dossier
   - examples:
@@ -119,7 +118,7 @@ Stop descending when any of the following becomes true:
 - the node is a file
 - the directory has no children in normalized data
 - the directory is below the configured minimum bytes threshold
-- the directory is already classified as `do not touch`
+- the directory is already classified as `keep protected`
 - the child distribution is too flat to produce a meaningful dominant subset
 
 When the distribution is too flat, the directory itself remains a candidate so the dossier still captures the aggregate waste pattern.
@@ -132,7 +131,7 @@ Instead:
 
 - follow the recursive `80%` rule per dominant subtree
 - include all emitted candidates produced by that walk
-- keep `top_dirs.csv` and `top_files.csv` as diagnostic summaries, not as the final deletion contract
+- keep `top_dirs.csv` and `top_files.csv` as diagnostic summaries, not as the final review contract
 
 This means one run can legitimately output many candidates when a large subtree is composed of many medium-size deletable files.
 
@@ -184,7 +183,7 @@ Examples:
 
 This escalation is discretionary and not the default reporting path.
 
-## `deletion_report.md`
+## `review_report.md`
 
 The report must be directly readable by a human with no extra tooling.
 
@@ -193,21 +192,21 @@ The report must be directly readable by a human with no extra tooling.
 - run metadata
 - roots scanned
 - dominant branches discovered by the recursive walk
-- `delete first`
-- `inspect before delete`
-- `do not touch`
+- `review first`
+- `review carefully`
+- `keep protected`
 - dependency-check notes
 - next-step recommendations
 
 ### Candidate Rendering Format
 
-Each candidate entry in `deletion_report.md` must contain:
+Each candidate entry in `review_report.md` must contain:
 
 - full path
 - size in bytes and human-readable size
 - reason for selection
 - dependency check summary
-- final recommended action
+- final review bucket
 
 ## Config Additions
 
@@ -242,8 +241,8 @@ Automated tests must cover:
   - cache/temp/trash
   - user asset with no nearby refs
   - protected system path
-- `deletion_report.md` generation
-- `deletion_candidates.csv` generation
+- `review_report.md` generation
+- `review_candidates.csv` generation
 
 ## Non-Goals
 
@@ -251,3 +250,4 @@ Automated tests must cover:
 - deep semantic dependency analysis across the entire machine
 - file-content parsing for every binary format
 - LLM-based reasoning during report generation
+

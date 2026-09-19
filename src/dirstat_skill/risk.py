@@ -3,42 +3,42 @@ from __future__ import annotations
 
 def classify_path(
     path: str,
-    do_not_touch_prefixes: list[str],
-    needs_inspection_prefixes: list[str],
+    keep_protected_prefixes: list[str],
+    review_carefully_prefixes: list[str],
 ) -> str:
     normalized_path = _normalize_path(path)
-    for prefix in do_not_touch_prefixes:
+    for prefix in keep_protected_prefixes:
         normalized = _normalize_path(prefix)
         if normalized_path == normalized or normalized_path.startswith(f"{normalized}/"):
-            return "do not touch"
+            return "keep protected"
 
-    if _is_obvious_delete_first(normalized_path):
-        return "delete first"
+    if _is_obvious_review_first(normalized_path):
+        return "review first"
 
-    for prefix in needs_inspection_prefixes:
+    for prefix in review_carefully_prefixes:
         normalized = _normalize_path(prefix)
         if normalized_path == normalized or normalized_path.startswith(f"{normalized}/"):
-            return "inspect before delete"
+            return "review carefully"
 
-    return "inspect before delete"
+    return "review carefully"
 
 
 def _normalize_path(path: str) -> str:
     return path.replace("\\", "/").rstrip("/").lower()
 
 
-def _is_obvious_delete_first(normalized_path: str) -> bool:
-    delete_first_exact_paths = {
+def _is_obvious_review_first(normalized_path: str) -> bool:
+    review_first_exact_paths = {
         "/tmp",
         "/var/tmp",
     }
-    delete_first_suffixes = (
+    review_first_suffixes = (
         "/.cache",
         "/trash",
         "/.trash",
         "/appdata/local/temp",
     )
-    delete_first_fragments = (
+    review_first_fragments = (
         "/.cache/",
         "/trash/",
         "/.trash/",
@@ -46,10 +46,10 @@ def _is_obvious_delete_first(normalized_path: str) -> bool:
         "/tmp/",
         "/var/tmp/",
     )
-    if normalized_path in delete_first_exact_paths:
+    if normalized_path in review_first_exact_paths:
         return True
-    if normalized_path.endswith(delete_first_suffixes):
+    if normalized_path.endswith(review_first_suffixes):
         return True
-    if any(fragment in normalized_path for fragment in delete_first_fragments):
+    if any(fragment in normalized_path for fragment in review_first_fragments):
         return True
     return normalized_path.endswith((".filepart", ".part", ".partial", ".tmp", ".cache"))

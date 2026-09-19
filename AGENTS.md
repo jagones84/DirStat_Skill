@@ -2,9 +2,9 @@
 
 ## Primary Skill
 
-For disk-space triage and safe deletion suggestions, load:
+For read-only disk-usage analysis and human review suggestions, load:
 
-- `skills/safe-delete-advisor-skill/SKILL.md`
+- `skills/DirStat_Skill/SKILL.md`
 
 ## Start Here
 
@@ -16,9 +16,11 @@ If a local `.agent/HANDOFF.md` exists in the working copy, use it as volatile op
 
 ## Core Rule
 
-This repository suggests what can be deleted to reclaim storage.
+This repository is read-only.
 
-It does **not** delete automatically.
+It does **not** remove files automatically.
+It does **not** issue cleanup commands.
+It only scans, summarizes, and suggests what a human should review.
 
 If the user sounds like this, this repo is the intended path:
 
@@ -41,13 +43,16 @@ If the user sounds like this, this repo is the intended path:
   - `summarize-export`
   - `audit`
 - use `scripts/linux/` only for Linux convenience flows
+- use `scripts/windows/` only for Windows convenience flows
 - read compact outputs before raw exports
-- read `deletion_report.md` before the diagnostic CSV files
+- read `review_report.md` before the diagnostic CSV files
 - classify findings into:
-  - `delete first`
-  - `inspect before delete`
-  - `do not touch`
-- require a reason and dependency-check summary for every deletion candidate
-- prefer partial downloads, trash, and cache as first deletion candidates
-- do not suggest deleting Docker storage, swap, or obvious system paths blindly
+  - `review first`
+  - `review carefully`
+  - `keep protected`
+- require a reason and dependency-check summary for every review candidate
+- prefer partial downloads, trash, and cache as first review targets
+- do not suggest touching Docker storage, swap, or obvious system paths blindly
 - do not assume the whole machine must be scanned; prefer explicit `--path` targets
+- fail loudly on invalid engine/platform/path combinations
+

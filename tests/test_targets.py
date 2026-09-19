@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from safe_delete_advisor.targets import ScanTarget, normalize_targets
+from dirstat_skill.targets import ScanTarget, normalize_targets
 
 
 def test_normalize_targets_keeps_multiple_explicit_paths() -> None:
@@ -22,3 +22,4 @@ def test_normalize_targets_keeps_multiple_explicit_paths() -> None:
 def test_normalize_targets_rejects_empty_request_when_auto_discover_disabled() -> None:
     with pytest.raises(ValueError, match="No scan targets were provided"):
         normalize_targets(requested_paths=[], auto_discover=False, platform_name="windows")
+

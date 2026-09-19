@@ -1,51 +1,52 @@
 ---
-name: "safe-delete-advisor-skill"
-description: "Use when auditing disk usage on Windows or Linux and suggesting what can be deleted safely without deleting anything automatically, especially for caches, model files, trash, and partial downloads."
+name: "DirStat_Skill"
+description: "Use when auditing disk usage on Windows or Linux and suggesting what a human should review to reclaim space without deleting anything automatically, especially for caches, model files, trash, and partial downloads."
 ---
 
-# Safe Delete Advisor Skill
+# DirStat_Skill
+
+> READ-ONLY ANALYSIS ONLY
+>
+> This skill never removes files, never schedules cleanup, and never performs cleanup actions.
+> It only scans disk usage, emits compact reports, and suggests what a human should review.
 
 ## Overview
 
-This skill turns the repository into an agent-ready workflow for **space recovery triage**.
+This skill turns the repository into an agent-ready workflow for read-only space recovery triage.
 
-It does **not** delete files on its own.
-It audits disk usage, reads compact reports, and produces a shortlist of:
+It audits disk usage, reads compact reports, and produces three review buckets:
 
-- delete first
-- inspect before delete
-- do not touch
+- `review first`
+- `review carefully`
+- `keep protected`
 
-The reporting flow now emits a recursive deletion dossier instead of relying on a flat top-10 style shortlist.
-
-Marketing promise:
-
-- tired of wasting tens of GB on forgotten AI models, huge caches, and files you have not touched since the Cold War?
-- this workflow gives a safe, read-only shortlist instead of blind cleanup
+The reporting flow emits a recursive review dossier instead of a flat top list.
 
 ## When to Use
 
 Use this skill when:
 
-- the user asks what can be deleted to free disk space
+- the user asks what is consuming disk space
+- the user asks what can be reviewed to free disk space
 - the machine has large caches, model files, partial downloads, or trash
 - the user wants a safe shortlist, not blind cleanup
 - the environment is Windows or Linux and the repo tools are available
 
 Do not use this skill when:
 
-- the user wants automatic deletion without review
+- the user wants automatic cleanup without review
 - the environment is unrelated to this repository and its workflow
 - the task is generic system administration with no need for disk-space triage
 
 ## Safety Rules
 
-- Never delete automatically.
-- Suggest deletion only.
+- Never remove files automatically.
+- Never emit cleanup commands.
+- Suggest human review only.
 - Read compact outputs before raw exports.
-- Treat partial downloads, trash, and cache as the first deletion class.
-- Treat model assets, checkpoints, and live app inputs as `inspect before delete`.
-- Treat Docker storage, swap, and system-owned paths as `do not touch`.
+- Treat partial downloads, trash, and cache as `review first`.
+- Treat model assets, checkpoints, and live app inputs as `review carefully`.
+- Treat Docker storage, swap, and system-owned paths as `keep protected`.
 - If `ncdu` is missing on Linux and installation needs `sudo`, use the repo install path only; do not invent alternate flows.
 - Never store credentials or passwords in the repository.
 
@@ -54,8 +55,9 @@ Do not use this skill when:
 - `README.md`: project overview and commands
 - `AGENTS.md`: repository entrypoint for agents
 - local `.agent/HANDOFF.md` if present: volatile operator memory, not required for the public repository
-- `python -m safe_delete_advisor.cli`: generic CLI
+- `python -m dirstat_skill.cli`: generic CLI
 - `scripts/linux/*.sh`: Linux helper scripts only
+- `scripts/windows/*.ps1`: Windows helper scripts only
 
 ## Standard Workflow
 
@@ -75,13 +77,17 @@ If the repo already contains recent audit results or blockers, continue from the
 - On Linux:
   - use the generic CLI with `--engine ncdu`
   - or use `scripts/linux/` helpers when they make the flow faster
+- On remote or mixed-machine setups:
+  - run the scan on the machine that owns the filesystem
+  - move only the compact outputs elsewhere for review
+  - do not force Linux `ncdu` onto Windows-style paths or Windows runtime onto Linux-style paths
 
 ### 3. Windows Read-Only Audit
 
 Run:
 
 ```bash
-python -m safe_delete_advisor.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json
+python -m dirstat_skill.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json
 ```
 
 Expected:
@@ -92,14 +98,14 @@ Expected:
 - `top_dirs.csv`
 - `top_files.csv`
 - `candidates.json`
-- `deletion_candidates.csv`
-- `deletion_report.md`
+- `review_candidates.csv`
+- `review_report.md`
 - `run.log`
 
 To scan more than one target on Windows:
 
 ```bash
-python -m safe_delete_advisor.cli audit --path C:\ --path D:\models --output-dir outputs\win_multi_audit --config config\defaults.json
+python -m dirstat_skill.cli audit --path C:\ --path D:\models --output-dir outputs\win_multi_audit --config config\defaults.json
 ```
 
 ### 4. Linux Read-Only Audit
@@ -107,7 +113,7 @@ python -m safe_delete_advisor.cli audit --path C:\ --path D:\models --output-dir
 Run:
 
 ```bash
-python3 -m safe_delete_advisor.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json
+python3 -m dirstat_skill.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json
 ```
 
 Expected:
@@ -134,8 +140,14 @@ bash scripts/linux/run_audit.sh
 For DGX over SSH:
 
 ```bash
-ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/prepare_linux_scripts.sh
-ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/run_audit.sh
+ssh dgx bash /home/jagones/Repositories/DirStat_Skill/scripts/linux/prepare_linux_scripts.sh
+ssh dgx /home/jagones/Repositories/DirStat_Skill/scripts/linux/run_audit.sh
+```
+
+### 5.1 Optional Windows Helper Workflow
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/windows/run_audit.ps1 -TargetPath C:\ -OutputDir outputs\win_c_audit
 ```
 
 ### 6. Read Compact Outputs
@@ -148,8 +160,8 @@ bash scripts/linux/show_latest_audit.sh
 
 Read in this order:
 
-- `deletion_report.md`
-- `deletion_candidates.csv`
+- `review_report.md`
+- `review_candidates.csv`
 - `summary.md`
 - `top_dirs.csv`
 - `top_files.csv`
@@ -157,7 +169,7 @@ Read in this order:
 
 Do **not** start from the raw export unless the compact reports are missing or clearly wrong.
 
-### 7. Pull The Safe-ish Deletion Layer
+### 7. Pull The Safe-ish Review Layer
 
 Run:
 
@@ -165,7 +177,7 @@ Run:
 bash scripts/linux/find_safe_candidates.sh
 ```
 
-This helper focuses on the highest-confidence deletion classes:
+This helper focuses on the highest-confidence review classes:
 
 - large cache files
 - partial downloads like `*.filepart`
@@ -175,14 +187,14 @@ This helper focuses on the highest-confidence deletion classes:
 
 Use these buckets:
 
-- `delete first`
+- `review first`
   - incomplete downloads
   - trash contents
   - large cache blobs that are redownloadable
-- `inspect before delete`
+- `review carefully`
   - model directories under user-owned paths
   - checkpoints, safetensors, gguf, live app inputs
-- `do not touch`
+- `keep protected`
   - `C:\Windows`
   - `C:\Program Files`
   - `/etc`, `/usr`, `/boot`, `/var/lib`
@@ -197,11 +209,11 @@ The selector should:
 - recurse into dominant subtrees
 - emit all concrete candidates found in those dominant subtrees, even when many medium files matter together
 
-This avoids the classic failure mode where a flat top list misses dozens of 1-5 GB deletable files that dominate space as a group.
+This avoids the classic failure mode where a flat top list misses dozens of 1-5 GB review-worthy files that dominate space as a group.
 
 ### 9. Produce The Final Suggestion
 
-Return a deletion suggestion list grouped by:
+Return a human-review suggestion list grouped by:
 
 - path
 - size
@@ -210,9 +222,9 @@ Return a deletion suggestion list grouped by:
 
 Preferred output order:
 
-1. delete first
-2. inspect before delete
-3. do not touch
+1. review first
+2. review carefully
+3. keep protected
 
 ## Verified Runtime Notes
 
@@ -234,18 +246,18 @@ The final answer should always contain:
 ## Common Mistakes
 
 - reading the raw export first and wasting tokens
-- suggesting deletion of model assets only because they are large
-- deleting Docker or swap storage
+- suggesting cleanup of model assets only because they are large
+- touching Docker or swap storage
 - skipping compact outputs and jumping directly to live assets
 - reporting only file names without full paths
 - omitting the dependency-check rationale
-- treating “large” as equal to “safe to remove”
+- treating “large” as equal to “safe to clean”
 
 ## Quick Reference
 
 ```bash
-python -m safe_delete_advisor.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json
-python3 -m safe_delete_advisor.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json
+python -m dirstat_skill.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json
+python3 -m dirstat_skill.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json
 bash scripts/linux/run_audit.sh
 bash scripts/linux/show_latest_audit.sh
 bash scripts/linux/find_safe_candidates.sh
@@ -253,5 +265,6 @@ bash scripts/linux/find_safe_candidates.sh
 
 ## Current Naming
 
-The public repository and skill identity are `safe-delete-advisor-skill`.
-The Python import package remains `safe_delete_advisor`.
+The public repository and skill identity are `DirStat_Skill`.
+The Python import package is `dirstat_skill`.
+

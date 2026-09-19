@@ -1,8 +1,8 @@
-# safe-delete-advisor-skill Design
+# DirStat_Skill Design
 
 ## Goal
 
-Build a public, GitHub-ready repository and agent skill that audits disk usage in a read-only way on both Windows and Linux, produces compact AI-friendly summaries, and suggests what can be deleted safely without performing deletion automatically.
+Build a public, GitHub-ready repository and agent skill that audits disk usage in a read-only way on both Windows and Linux, produces compact AI-friendly summaries, and suggests what a human should review to reclaim space without performing any removal automatically.
 
 ## Scope
 
@@ -14,7 +14,7 @@ The next version is:
 - optimized for low-token AI review
 - packaged as one reusable skill, not as a machine-specific workflow
 
-The next version is not responsible for deleting files automatically.
+The next version is not responsible for removing files automatically.
 
 ## Supported Runtime Model
 
@@ -52,7 +52,7 @@ Sources:
 2. Keep raw scan data on disk and out of LLM context by default.
 3. Separate engine-specific scan logic from normalization and reporting.
 4. Make the first review pass compact and risk-ranked.
-5. Suggest deletion only; never delete automatically.
+5. Suggest review only; never remove files automatically.
 6. Accept explicit target paths instead of assuming a machine-wide default root.
 
 ## High-Level Architecture
@@ -104,10 +104,10 @@ Linux support keeps `ncdu` as the preferred engine when available.
 
 The CLI should move from a Linux-specific summarizer into a generic interface:
 
-- `safe-delete-advisor-skill scan --path C:\ --path D:\`
-- `safe-delete-advisor-skill scan --path / --engine ncdu`
-- `safe-delete-advisor-skill summarize-export --export <raw-export> --output-dir <run-dir>`
-- `safe-delete-advisor-skill audit --path C:\`
+- `DirStat_Skill scan --path C:\ --path D:\`
+- `DirStat_Skill scan --path / --engine ncdu`
+- `DirStat_Skill summarize-export --export <raw-export> --output-dir <run-dir>`
+- `DirStat_Skill audit --path C:\`
 
 Behavior:
 
@@ -155,7 +155,7 @@ The workflow must not:
 
 ## Repository Layout
 
-- `skills/safe-delete-advisor-skill/SKILL.md`
+- `skills/DirStat_Skill/SKILL.md`
   - public skill entrypoint
 - `AGENTS.md`
   - repository-level pointer for agent users
@@ -192,11 +192,11 @@ This output contract stays platform-independent.
 
 ## Risk Model
 
-Each shortlisted path should be placed into one of three buckets:
+Each shortlisted path should be placed into one of three review buckets:
 
-- `delete first`
-- `inspect before delete`
-- `do not touch`
+- `review first`
+- `review carefully`
+- `keep protected`
 
 Classification should consider:
 
@@ -262,7 +262,7 @@ Manual verification should confirm:
 - Windows audit runs on at least two local volumes if available
 - Linux audit still works on ARM64 DGX
 - summaries remain compact
-- no delete operation is performed
+- no removal operation is performed
 - the skill instructions match the actual CLI and scripts
 
 ## Migration Constraints
@@ -274,7 +274,7 @@ The repository already contains Linux-specific code and DGX wrappers.
 - keep existing Linux functionality green while refactoring
 - move Linux wrappers into a clearly named Linux area
 - update README, AGENTS, and SKILL so they describe one global skill
-- keep the Python import package `safe_delete_advisor` stable unless a rename is strictly necessary
+- keep the Python import package `dirstat_skill` stable unless a rename is strictly necessary
 
 ## Recommended Next Step
 
@@ -287,5 +287,6 @@ Write an implementation plan for:
 - cross-platform risk rules
 - Windows and Linux verification
 - documentation rewrite for public GitHub usage
+
 
 

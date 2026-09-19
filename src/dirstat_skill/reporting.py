@@ -4,8 +4,8 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
-from safe_delete_advisor.models import DeletionCandidate, NormalizedNode
-from safe_delete_advisor.risk import classify_path
+from dirstat_skill.models import NormalizedNode, ReviewCandidate
+from dirstat_skill.risk import classify_path
 
 
 @dataclass(frozen=True)
@@ -60,17 +60,17 @@ def select_dominant_candidates_for_roots(
     return _dedupe_nodes(selected)
 
 
-def build_deletion_candidates(
+def build_review_candidates(
     selected_nodes: list[NormalizedNode],
     all_nodes: list[NormalizedNode],
     protected_prefixes: list[str],
     inspection_prefixes: list[str],
     nearby_reference_extensions: list[str],
     max_nearby_reference_files: int,
-) -> list[DeletionCandidate]:
-    candidates: list[DeletionCandidate] = []
+) -> list[ReviewCandidate]:
+    candidates: list[ReviewCandidate] = []
     for node in selected_nodes:
-        recommended_action = classify_path(
+        review_bucket = classify_path(
             node.path,
             protected_prefixes,
             inspection_prefixes,
@@ -80,36 +80,38 @@ def build_deletion_candidates(
             nearby_reference_extensions=nearby_reference_extensions,
             max_nearby_reference_files=max_nearby_reference_files,
         )
-        candidate_reason = _candidate_reason(node=node, recommended_action=recommended_action)
+        review_reason = _review_reason(node=node, review_bucket=review_bucket)
         dependency_check_summary, confidence = _dependency_summary(
             node=node,
-            recommended_action=recommended_action,
+            review_bucket=review_bucket,
             nearby_refs=nearby_refs,
         )
         candidates.append(
-            DeletionCandidate(
+            ReviewCandidate(
                 path=node.path,
                 dsize=node.dsize,
                 is_dir=node.is_dir,
-                risk=recommended_action,
-                candidate_reason=candidate_reason,
+                bucket=review_bucket,
+                review_reason=review_reason,
                 dependency_check_summary=dependency_check_summary,
                 dependency_check_confidence=confidence,
-                recommended_action=recommended_action,
                 selection_source="dominant_subtree" if node.is_dir else "dominant_leaf",
             )
         )
     return candidates
 
 
-def render_deletion_report(root_path: str, candidates: list[DeletionCandidate]) -> str:
+def render_review_report(root_path: str, candidates: list[ReviewCandidate]) -> str:
     sections = [
-        ("Delete First", "delete first"),
-        ("Inspect Before Delete", "inspect before delete"),
-        ("Do Not Touch", "do not touch"),
+        ("Review First", "review first"),
+        ("Review Carefully", "review carefully"),
+        ("Keep Protected", "keep protected"),
     ]
     lines = [
-        "# Deletion Report",
+        "# Review Report",
+        "",
+        "> READ-ONLY ANALYSIS ONLY",
+        "> DirStat_Skill never removes files. It only suggests what a human should review.",
         "",
         f"- root: `{root_path}`",
         f"- total_candidates: {len(candidates)}",
@@ -118,7 +120,7 @@ def render_deletion_report(root_path: str, candidates: list[DeletionCandidate]) 
     for title, action in sections:
         lines.append(f"## {title}")
         lines.append("")
-        section_candidates = [item for item in candidates if item.recommended_action == action]
+        section_candidates = [item for item in candidates if item.bucket == action]
         if not section_candidates:
             lines.append("- none")
             lines.append("")
@@ -128,17 +130,17 @@ def render_deletion_report(root_path: str, candidates: list[DeletionCandidate]) 
             lines.append("")
             lines.append(f"- size_bytes: `{candidate.dsize}`")
             lines.append(f"- size_human: `{_human_size(candidate.dsize)}`")
-            lines.append(f"- reason: {candidate.candidate_reason}")
+            lines.append(f"- review_reason: {candidate.review_reason}")
             lines.append(f"- dependency_check: {candidate.dependency_check_summary}")
             lines.append(f"- confidence: `{candidate.dependency_check_confidence}`")
-            lines.append(f"- action: `{candidate.recommended_action}`")
+            lines.append(f"- review_bucket: `{candidate.bucket}`")
             lines.append("")
     return "\n".join(lines)
 
 
-def write_deletion_candidates_csv(
+def write_review_candidates_csv(
     output_path: Path,
-    candidates: list[DeletionCandidate],
+    candidates: list[ReviewCandidate],
 ) -> None:
     with output_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
@@ -147,11 +149,10 @@ def write_deletion_candidates_csv(
                 "path",
                 "dsize",
                 "is_dir",
-                "risk",
-                "candidate_reason",
+                "bucket",
+                "review_reason",
                 "dependency_check_summary",
                 "dependency_check_confidence",
-                "recommended_action",
                 "selection_source",
             ],
         )
@@ -218,33 +219,33 @@ def _select_from_node(
     return selected or [node]
 
 
-def _candidate_reason(node: NormalizedNode, recommended_action: str) -> str:
+def _review_reason(node: NormalizedNode, review_bucket: str) -> str:
     normalized = _path_key(node.path)
     if normalized.endswith((".filepart", ".part", ".partial")):
-        return "partial download file selected by recursive 80/20 walk"
+        return "partial download signature surfaced by the recursive 80/20 walk"
     if any(fragment in normalized for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")):
-        return "cache/temp/trash path selected by recursive 80/20 walk"
-    if recommended_action == "do not touch":
-        return "protected system or runtime-owned path"
+        return "cache, temp, or trash path surfaced by the recursive 80/20 walk"
+    if review_bucket == "keep protected":
+        return "protected system or runtime-owned path that should stay untouched"
     if normalized.endswith((".gguf", ".safetensors", ".ckpt", ".bin", ".pth")):
-        return "user-owned model asset selected by recursive 80/20 walk"
+        return "user-owned model asset surfaced by the recursive 80/20 walk"
     if node.is_dir:
-        return "directory dominates parent space under recursive 80/20 walk"
-    return "file selected by recursive 80/20 walk"
+        return "directory dominates parent space under the recursive 80/20 walk"
+    return "file surfaced by the recursive 80/20 walk"
 
 
 def _dependency_summary(
     node: NormalizedNode,
-    recommended_action: str,
+    review_bucket: str,
     nearby_refs: list[str],
 ) -> tuple[str, str]:
     normalized = _path_key(node.path)
-    if recommended_action == "do not touch":
+    if review_bucket == "keep protected":
         return "protected path matched system/runtime policy prefixes", "high"
     if any(fragment in normalized for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")):
-        return "matched cache/temp/trash signature; no nearby manifests or workflow refs required", "high"
+        return "matched cache/temp/trash signature; review is low-risk and no nearby manifests were found", "high"
     if normalized.endswith((".filepart", ".part", ".partial")):
-        return "matched partial-download signature; safe to remove if incomplete", "high"
+        return "matched partial-download signature; human can usually remove it after a quick sanity check", "high"
     if nearby_refs:
         return f"nearby references found in {', '.join(nearby_refs)}", "medium"
     return "no nearby references found in candidate directory or checked ancestors", "low"
@@ -333,3 +334,4 @@ def _human_size(size_bytes: int) -> str:
             return f"{size:.1f} {unit}"
         size /= 1024
     return f"{size_bytes} B"
+

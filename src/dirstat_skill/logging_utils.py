@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def configure_run_logger(log_path: Path) -> logging.Logger:
-    logger = logging.getLogger("safe_delete_advisor")
+    logger = logging.getLogger("dirstat_skill")
     logger.handlers.clear()
     logger.setLevel(logging.INFO)
     logger.propagate = False
@@ -16,3 +16,4 @@ def configure_run_logger(log_path: Path) -> logging.Logger:
     )
     logger.addHandler(handler)
     return logger
+

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from safe_delete_advisor.ncdu_json import parse_ncdu_export
+from dirstat_skill.ncdu_json import parse_ncdu_export
 
 
 def test_parse_ncdu_export_flattens_directory_tree() -> None:
@@ -19,3 +19,4 @@ def test_parse_ncdu_export_flattens_directory_tree() -> None:
     assert result.nodes[2].path == "/sample/cache/huge.log"
     assert result.nodes[2].is_dir is False
     assert result.nodes[2].dsize == 3221225472
+
