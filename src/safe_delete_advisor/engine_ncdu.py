@@ -23,7 +23,7 @@ def build_ncdu_export_command(
     one_file_system: bool,
     exclude_patterns: list[str],
 ) -> list[str]:
-    command = [binary, "-o", str(output_path)]
+    command = [binary, "-o", output_path.as_posix()]
     if one_file_system:
         command.append("-x")
     for pattern in exclude_patterns:
