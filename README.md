@@ -73,6 +73,8 @@ The repository is explicitly designed to avoid wasting tokens:
 - verify `ncdu`: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/verify_ncdu.sh`
 - guarded install attempt: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/install_ncdu.sh`
 - live audit run: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/run_audit.sh`
+- show latest audit outputs: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/show_latest_audit.sh`
+- find safer deletion candidates: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/find_safe_candidates.sh`
 
 ## Status
 
@@ -80,5 +82,6 @@ The repository is explicitly designed to avoid wasting tokens:
 - design spec written
 - implementation in progress
 - Python pipeline implemented and tests passing
-- DGX verify completed: `ncdu` missing from PATH
-- install blocked pending interactive sudo input
+- DGX verify completed: `ncdu` installed and detected
+- live audit run completed successfully
+- safe-candidate helper identifies large cache, partial-download, and trash files

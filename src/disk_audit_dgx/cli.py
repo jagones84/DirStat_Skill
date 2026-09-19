@@ -80,3 +80,7 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
         encoding="utf-8",
     )
     return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

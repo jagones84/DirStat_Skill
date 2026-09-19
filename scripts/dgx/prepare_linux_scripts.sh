@@ -7,6 +7,8 @@ for script in \
   "$REPO_ROOT/scripts/dgx/verify_ncdu.sh" \
   "$REPO_ROOT/scripts/dgx/install_ncdu.sh" \
   "$REPO_ROOT/scripts/dgx/run_audit.sh" \
+  "$REPO_ROOT/scripts/dgx/show_latest_audit.sh" \
+  "$REPO_ROOT/scripts/dgx/find_safe_candidates.sh" \
   "$REPO_ROOT/scripts/dgx/prepare_linux_scripts.sh"
 do
   sed -i 's/\r$//' "$script"
