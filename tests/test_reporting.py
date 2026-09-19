@@ -1,7 +1,10 @@
 from pathlib import Path
 
+import pytest
+
 from dirstat_skill.models import AnalysisFinding, NormalizedNode
 from dirstat_skill.reporting import (
+    _find_nearby_references,
     build_analysis_findings,
     build_top_lists,
     render_review_report,
@@ -291,4 +294,51 @@ def test_render_review_report_includes_dominant_space_findings(tmp_path: Path) -
     assert "# Review Report" in report
     assert "## Dominant Space" in report
     assert str(model_path) in report
+
+
+def test_find_nearby_references_ignores_untrusted_mount_on_path_probe(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate = Path(r"C:\Users\giova\AppData\Local\Sandfall")
+    original_exists = Path.exists
+
+    def fake_exists(self: Path) -> bool:
+        if self == candidate:
+            raise OSError("[WinError 448] untrusted mount point")
+        return original_exists(self)
+
+    monkeypatch.setattr(Path, "exists", fake_exists)
+
+    assert _find_nearby_references(str(candidate), [".json"], 5) == []
+
+
+def test_find_nearby_references_ignores_untrusted_mount_during_entry_probe(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "weights.gguf"
+    target.write_bytes(b"x")
+    ref_dir = tmp_path / "refs"
+    ref_dir.mkdir()
+
+    class FakeEntry:
+        name = "bad-mount.json"
+        suffix = ".json"
+
+        def is_file(self) -> bool:
+            raise OSError("[WinError 448] untrusted mount point")
+
+        def read_text(self, encoding: str = "utf-8", errors: str = "ignore") -> str:
+            return "weights.gguf"
+
+    original_iterdir = Path.iterdir
+
+    def fake_iterdir(self: Path):
+        if self == tmp_path:
+            return iter([FakeEntry()])
+        return original_iterdir(self)
+
+    monkeypatch.setattr(Path, "iterdir", fake_iterdir)
+
+    assert _find_nearby_references(str(target), [".json"], 5) == []
 

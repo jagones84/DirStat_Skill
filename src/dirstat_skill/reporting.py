@@ -428,10 +428,17 @@ def _find_nearby_references(
     max_nearby_reference_files: int,
 ) -> list[str]:
     candidate_path = Path(path)
-    if not candidate_path.exists():
+    try:
+        exists = candidate_path.exists()
+    except OSError:
+        return []
+    if not exists:
         return []
     search_dirs: list[Path] = []
-    current = candidate_path if candidate_path.is_dir() else candidate_path.parent
+    try:
+        current = candidate_path if candidate_path.is_dir() else candidate_path.parent
+    except OSError:
+        return []
     for _ in range(3):
         if current in search_dirs:
             break
@@ -447,7 +454,11 @@ def _find_nearby_references(
         except OSError:
             continue
         for entry in entries:
-            if not entry.is_file():
+            try:
+                is_file = entry.is_file()
+            except OSError:
+                continue
+            if not is_file:
                 continue
             if entry.suffix.lower() not in nearby_reference_extensions:
                 continue
