@@ -214,3 +214,7 @@ Dependency checks are cheap and local by default:
 - `.agent/`: local operator memory, ignored from git
 - `trash/`: disposable experiments, ignored from git
 
+## License
+
+Licensed under the **Apache License 2.0** — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+

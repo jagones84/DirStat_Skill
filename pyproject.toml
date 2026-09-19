@@ -7,6 +7,8 @@ name = "DirStat_Skill"
 version = "0.1.0"
 description = "Read-only disk usage analysis skill that suggests what a human should review on Windows and Linux hosts"
 requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "jagones84" }]
 dependencies = []
 
 [project.optional-dependencies]
