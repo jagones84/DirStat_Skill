@@ -375,7 +375,7 @@ def _review_reason(node: NormalizedNode, attention_level: str, analysis_kind: st
     normalized = _path_key(node.path)
     if normalized.endswith((".filepart", ".part", ".partial")):
         return "incomplete download pattern surfaced by the dominant-space walk"
-    if any(fragment in normalized for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")):
+    if _has_cache_temp_trash_signature(normalized):
         return "cache, temp, or trash path surfaced by the dominant-space walk"
     if analysis_kind == "nearby references":
         return "path surfaced with nearby contextual references worth reading before drawing conclusions"
@@ -411,7 +411,7 @@ def _evidence_and_confidence(
     normalized = _path_key(node.path)
     if attention_level == "keep protected":
         return "matched protected path prefix", "high"
-    if any(fragment in normalized for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")):
+    if _has_cache_temp_trash_signature(normalized):
         return "matched cache or temp path signature", "high"
     if normalized.endswith((".filepart", ".part", ".partial")):
         return "matched partial-download suffix", "high"
@@ -474,9 +474,19 @@ def _find_nearby_references(
 
 
 def _is_signature_path(normalized: str) -> bool:
-    return normalized.endswith((".filepart", ".part", ".partial", ".tmp", ".cache")) or any(
-        fragment in normalized
-        for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")
+    return normalized.endswith((".filepart", ".part", ".partial", ".tmp", ".cache")) or _has_cache_temp_trash_signature(
+        normalized
+    )
+
+
+def _has_cache_temp_trash_signature(normalized: str) -> bool:
+    if any(fragment in normalized for fragment in ("/appdata/local/temp", "/tmp", "/var/tmp")):
+        return True
+    segments = [segment for segment in normalized.split("/") if segment]
+    return any(
+        segment in {"trash", ".trash", ".cache"}
+        or segment.endswith("_cache")
+        for segment in segments
     )
 
 

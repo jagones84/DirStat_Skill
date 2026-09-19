@@ -32,24 +32,21 @@ def _is_obvious_review_first(normalized_path: str) -> bool:
         "/tmp",
         "/var/tmp",
     }
-    review_first_suffixes = (
-        "/.cache",
-        "/trash",
-        "/.trash",
-        "/appdata/local/temp",
-    )
-    review_first_fragments = (
-        "/.cache/",
-        "/trash/",
-        "/.trash/",
-        "/appdata/local/temp/",
-        "/tmp/",
-        "/var/tmp/",
-    )
     if normalized_path in review_first_exact_paths:
         return True
-    if normalized_path.endswith(review_first_suffixes):
+    if _has_cache_or_trash_signature(normalized_path):
         return True
-    if any(fragment in normalized_path for fragment in review_first_fragments):
+    if any(fragment in normalized_path for fragment in ("/appdata/local/temp/", "/tmp/", "/var/tmp/")):
         return True
     return normalized_path.endswith((".filepart", ".part", ".partial", ".tmp", ".cache"))
+
+
+def _has_cache_or_trash_signature(normalized_path: str) -> bool:
+    if normalized_path.endswith(("/.cache", "/trash", "/.trash", "/appdata/local/temp")):
+        return True
+    segments = [segment for segment in normalized_path.split("/") if segment]
+    return any(
+        segment in {"trash", ".trash", ".cache"}
+        or segment.endswith("_cache")
+        for segment in segments
+    )

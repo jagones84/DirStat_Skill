@@ -164,6 +164,48 @@ Attention levels still stay compact:
 - `candidates.json`
   - machine-readable version for agent workflows
 
+### Example Report Snapshot
+
+The compact dossier is meant to read like this:
+
+```text
+Root: F:\
+Total scanned: 3.70 TB
+
+Dominant space
+- F:\SteamLibrary -> 1.68 TB
+- F:\huggingface_cache -> 402 GB
+- F:\PROGRAMS\ComfyUI\models -> 281 GB
+
+Probable duplicates
+- flux1-dev-fp8.safetensors -> 17.25 GB x2
+  evidence: same basename, same size, different directories
+- silicon-maid-7b.gguf -> 4.37 GB x3
+  evidence: same basename, same size, different directories
+
+Signature heuristics
+- F:\GAMES\ZIPPED\2025.10.17_Shipping_Full_Build_1_AA.zip -> 19.7 GB
+  reason: archive appears redundant because extracted content exists nearby
+- F:\huggingface_cache\... -> 402 GB
+  reason: redownloadable model cache under a cache-like path
+
+Keep protected
+- F:\docker\wsl\data\docker_data.vhdx -> 90 GB
+  reason: protected runtime-owned storage, keep visible but do not treat as an easy review target
+- F:\pagefile.sys -> 41 GB
+  reason: system paging file
+```
+
+That is the point of the repository: not just a raw top list, but a compact English dossier with:
+
+- full paths
+- concrete sizes
+- analysis type
+- evidence for why the path was surfaced
+- an attention level that stays readable for humans and agents
+
+Real runs also make product gaps visible. For example, if a path like `trash\` or `huggingface_cache\` is not surfaced by the signature heuristics, that is a tooling gap worth fixing rather than a reason to trust the output blindly.
+
 ### How To Read Results
 
 Read in this order:

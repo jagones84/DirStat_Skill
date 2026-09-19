@@ -146,6 +146,61 @@ def test_build_analysis_findings_emits_analysis_kind_and_evidence(tmp_path: Path
     assert findings[0].configured_dominant_percent == 0.8
 
 
+def test_build_analysis_findings_marks_huggingface_cache_as_signature_heuristic(
+    tmp_path: Path,
+) -> None:
+    cache_dir = tmp_path / "huggingface_cache" / "models--wan"
+    cache_dir.mkdir(parents=True)
+    blob_path = cache_dir / "blob.bin"
+    blob_path.write_bytes(b"x" * 8)
+
+    nodes = [
+        NormalizedNode(path=str(cache_dir), name=cache_dir.name, is_dir=True, asize=0, dsize=2000),
+        NormalizedNode(path=str(blob_path), name="blob.bin", is_dir=False, asize=0, dsize=1500),
+    ]
+
+    findings = build_analysis_findings(
+        selected_nodes=[nodes[0]],
+        all_nodes=nodes,
+        protected_prefixes=["/etc", "/usr", "/var/lib"],
+        inspection_prefixes=[str(tmp_path)],
+        nearby_reference_extensions=[".json", ".yaml"],
+        max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
+    )
+
+    assert findings[0].analysis_kind == "signature heuristics"
+    assert findings[0].attention_level == "review first"
+    assert "cache" in findings[0].evidence.lower()
+
+
+def test_build_analysis_findings_marks_trash_path_as_signature_heuristic(
+    tmp_path: Path,
+) -> None:
+    trash_dir = tmp_path / "games" / "trash" / "backup"
+    trash_dir.mkdir(parents=True)
+
+    nodes = [
+        NormalizedNode(path=str(trash_dir), name=trash_dir.name, is_dir=True, asize=0, dsize=2000),
+    ]
+
+    findings = build_analysis_findings(
+        selected_nodes=nodes,
+        all_nodes=nodes,
+        protected_prefixes=["/etc", "/usr", "/var/lib"],
+        inspection_prefixes=[str(tmp_path)],
+        nearby_reference_extensions=[".json", ".yaml"],
+        max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
+    )
+
+    assert findings[0].analysis_kind == "signature heuristics"
+    assert findings[0].attention_level == "review first"
+    assert "trash" in findings[0].review_reason.lower()
+
+
 def test_build_analysis_findings_marks_system_storage_as_path_safety() -> None:
     nodes = [
         NormalizedNode(path="/var/lib/docker-loop.xfs", name="docker-loop.xfs", is_dir=False, asize=0, dsize=2000),

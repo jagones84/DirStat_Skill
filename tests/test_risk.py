@@ -66,3 +66,14 @@ def test_classify_path_marks_linux_cache_directory_as_review_first() -> None:
         == "review first"
     )
 
+
+def test_classify_path_marks_huggingface_cache_directory_as_review_first() -> None:
+    assert (
+        classify_path(
+            "F:\\huggingface_cache\\models--wan2.2",
+            ["C:\\Windows", "C:\\Program Files", "F:\\docker"],
+            ["C:\\Users", "F:\\"],
+        )
+        == "review first"
+    )
+
