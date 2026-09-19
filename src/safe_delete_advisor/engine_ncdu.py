@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 
-from disk_audit_dgx.models import EngineInfo
+from safe_delete_advisor.models import EngineInfo
 
 
 def detect_ncdu(path_entries: list[str] | None = None) -> EngineInfo | None:

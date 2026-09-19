@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 
-from disk_audit_dgx.cli import main
+from safe_delete_advisor.cli import main
 
 
 def test_cli_summarize_export_writes_summary_files(tmp_path: Path) -> None:
@@ -39,7 +39,7 @@ def test_python_module_cli_writes_summary_files(tmp_path: Path) -> None:
         [
             sys.executable,
             "-m",
-            "disk_audit_dgx.cli",
+            "safe_delete_advisor.cli",
             "summarize-export",
             "--export",
             str(export_path),

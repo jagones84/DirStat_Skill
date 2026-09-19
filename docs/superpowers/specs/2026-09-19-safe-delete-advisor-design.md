@@ -1,4 +1,4 @@
-# disk-audit-dgx Design
+# safe-delete-advisor Design
 
 ## Goal
 
@@ -19,7 +19,7 @@ The first version is not responsible for deleting files automatically.
 
 - host machine for orchestration: Windows workstation with `Z:` mapped to the DGX home
 - target machine for scan execution: DGX/Linux ARM
-- repository location: `Z:\Repositories\disk-audit-dgx`
+- repository location: `Z:\Repositories\safe-delete-advisor`
 
 ## Core Principles
 
@@ -146,3 +146,5 @@ Manual verification should confirm:
 ## Recommended Next Step
 
 Write a detailed implementation plan for the repository skeleton, `ncdu` verification path, raw export handling, compact summarization, and safety classification.
+
+

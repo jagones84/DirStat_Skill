@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "disk-audit-dgx"
+name = "safe-delete-advisor"
 version = "0.1.0"
-description = "Read-only disk audit pipeline for DGX/Linux hosts"
+description = "Suggest what to delete safely to reclaim disk space on DGX/Linux hosts"
 requires-python = ">=3.12"
 dependencies = []
 

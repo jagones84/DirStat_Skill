@@ -1,4 +1,4 @@
-from disk_audit_dgx.risk import classify_path
+from safe_delete_advisor.risk import classify_path
 
 
 def test_classify_path_marks_system_prefix_as_do_not_touch() -> None:

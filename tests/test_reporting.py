@@ -1,5 +1,5 @@
-from disk_audit_dgx.models import NormalizedNode
-from disk_audit_dgx.reporting import build_top_lists
+from safe_delete_advisor.models import NormalizedNode
+from safe_delete_advisor.reporting import build_top_lists
 
 
 def test_build_top_lists_filters_by_threshold_and_type() -> None:

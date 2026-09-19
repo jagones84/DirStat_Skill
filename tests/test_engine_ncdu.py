@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from disk_audit_dgx.engine_ncdu import build_ncdu_export_command, detect_ncdu
+from safe_delete_advisor.engine_ncdu import build_ncdu_export_command, detect_ncdu
 
 
 def test_detect_ncdu_returns_none_when_binary_missing() -> None:

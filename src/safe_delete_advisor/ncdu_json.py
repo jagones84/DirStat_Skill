@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from disk_audit_dgx.models import NormalizedNode, ParsedExport
+from safe_delete_advisor.models import NormalizedNode, ParsedExport
 
 
 def parse_ncdu_export(export_path: Path) -> ParsedExport:

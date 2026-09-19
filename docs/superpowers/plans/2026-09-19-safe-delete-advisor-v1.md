@@ -1,4 +1,4 @@
-# disk-audit-dgx v1 Implementation Plan
+# safe-delete-advisor v1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -12,72 +12,72 @@
 
 ## File Structure
 
-- `Z:\Repositories\disk-audit-dgx\pyproject.toml`
+- `Z:\Repositories\safe-delete-advisor\pyproject.toml`
   - Python project metadata and `pytest` config
-- `Z:\Repositories\disk-audit-dgx\config\defaults.json`
+- `Z:\Repositories\safe-delete-advisor\config\defaults.json`
   - default thresholds, exclude rules, and risk lists
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\__init__.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\__init__.py`
   - package marker
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\config.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\config.py`
   - config dataclasses and loader
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\models.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\models.py`
   - normalized node/report dataclasses
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\engine_ncdu.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\engine_ncdu.py`
   - engine detection and command creation
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\ncdu_json.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\ncdu_json.py`
   - parser for `ncdu -o` JSON exports
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\risk.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\risk.py`
   - risk bucket assignment
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\reporting.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\reporting.py`
   - summary generation and output writers
-- `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\cli.py`
+- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\cli.py`
   - CLI entry point
-- `Z:\Repositories\disk-audit-dgx\scripts\dgx\verify_ncdu.sh`
+- `Z:\Repositories\safe-delete-advisor\scripts\dgx\verify_ncdu.sh`
   - fail-fast verification of `ncdu` presence on DGX
-- `Z:\Repositories\disk-audit-dgx\scripts\dgx\install_ncdu.sh`
+- `Z:\Repositories\safe-delete-advisor\scripts\dgx\install_ncdu.sh`
   - guarded installer that stops if unattended sudo is unavailable
-- `Z:\Repositories\disk-audit-dgx\scripts\dgx\run_audit.sh`
+- `Z:\Repositories\safe-delete-advisor\scripts\dgx\run_audit.sh`
   - live read-only export launcher
-- `Z:\Repositories\disk-audit-dgx\tests\fixtures\ncdu_minimal_export.json`
+- `Z:\Repositories\safe-delete-advisor\tests\fixtures\ncdu_minimal_export.json`
   - fixed sample export for parser tests
-- `Z:\Repositories\disk-audit-dgx\tests\test_config.py`
+- `Z:\Repositories\safe-delete-advisor\tests\test_config.py`
   - config loader tests
-- `Z:\Repositories\disk-audit-dgx\tests\test_engine_ncdu.py`
+- `Z:\Repositories\safe-delete-advisor\tests\test_engine_ncdu.py`
   - engine command builder tests
-- `Z:\Repositories\disk-audit-dgx\tests\test_ncdu_json.py`
+- `Z:\Repositories\safe-delete-advisor\tests\test_ncdu_json.py`
   - parser tests
-- `Z:\Repositories\disk-audit-dgx\tests\test_risk.py`
+- `Z:\Repositories\safe-delete-advisor\tests\test_risk.py`
   - risk bucket tests
-- `Z:\Repositories\disk-audit-dgx\tests\test_reporting.py`
+- `Z:\Repositories\safe-delete-advisor\tests\test_reporting.py`
   - summary/report generation tests
-- `Z:\Repositories\disk-audit-dgx\tests\test_cli.py`
+- `Z:\Repositories\safe-delete-advisor\tests\test_cli.py`
   - CLI smoke tests
-- `Z:\Repositories\disk-audit-dgx\outputs\.gitkeep`
+- `Z:\Repositories\safe-delete-advisor\outputs\.gitkeep`
   - keep tracked empty output root
-- `Z:\Repositories\disk-audit-dgx\trash\.gitkeep`
+- `Z:\Repositories\safe-delete-advisor\trash\.gitkeep`
   - keep tracked empty scratch root
-- `Z:\Repositories\disk-audit-dgx\.agent\HANDOFF.md`
+- `Z:\Repositories\safe-delete-advisor\.agent\HANDOFF.md`
   - update status and blockers after live verification
-- `Z:\Repositories\disk-audit-dgx\README.md`
+- `Z:\Repositories\safe-delete-advisor\README.md`
   - update with real usage commands after implementation
 
 ### Task 1: Bootstrap Python Project
 
 **Files:**
-- Create: `Z:\Repositories\disk-audit-dgx\pyproject.toml`
-- Create: `Z:\Repositories\disk-audit-dgx\config\defaults.json`
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\__init__.py`
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\config.py`
-- Create: `Z:\Repositories\disk-audit-dgx\tests\test_config.py`
-- Create: `Z:\Repositories\disk-audit-dgx\outputs\.gitkeep`
-- Create: `Z:\Repositories\disk-audit-dgx\trash\.gitkeep`
+- Create: `Z:\Repositories\safe-delete-advisor\pyproject.toml`
+- Create: `Z:\Repositories\safe-delete-advisor\config\defaults.json`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\__init__.py`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\config.py`
+- Create: `Z:\Repositories\safe-delete-advisor\tests\test_config.py`
+- Create: `Z:\Repositories\safe-delete-advisor\outputs\.gitkeep`
+- Create: `Z:\Repositories\safe-delete-advisor\trash\.gitkeep`
 
 - [ ] **Step 1: Write the failing config test**
 
 ```python
 from pathlib import Path
 
-from disk_audit_dgx.config import load_settings
+from safe_delete_advisor.config import load_settings
 
 
 def test_load_settings_reads_defaults_and_overrides(tmp_path: Path) -> None:
@@ -110,7 +110,7 @@ def test_load_settings_reads_defaults_and_overrides(tmp_path: Path) -> None:
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `python -m pytest tests/test_config.py -v`
-Expected: FAIL with `ModuleNotFoundError: No module named 'disk_audit_dgx'`
+Expected: FAIL with `ModuleNotFoundError: No module named 'safe_delete_advisor'`
 
 - [ ] **Step 3: Write minimal project bootstrap**
 
@@ -120,7 +120,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "disk-audit-dgx"
+name = "safe-delete-advisor"
 version = "0.1.0"
 description = "Read-only disk audit pipeline for DGX/Linux hosts"
 requires-python = ">=3.12"
@@ -199,24 +199,24 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add pyproject.toml config/defaults.json src/disk_audit_dgx/__init__.py src/disk_audit_dgx/config.py tests/test_config.py outputs/.gitkeep trash/.gitkeep
+git add pyproject.toml config/defaults.json src/safe_delete_advisor/__init__.py src/safe_delete_advisor/config.py tests/test_config.py outputs/.gitkeep trash/.gitkeep
 git commit -m "feat: bootstrap python project and config loader"
 ```
 
 ### Task 2: Add `ncdu` Engine Detection And Command Building
 
 **Files:**
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\models.py`
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\engine_ncdu.py`
-- Create: `Z:\Repositories\disk-audit-dgx\tests\test_engine_ncdu.py`
-- Create: `Z:\Repositories\disk-audit-dgx\scripts\dgx\verify_ncdu.sh`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\models.py`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\engine_ncdu.py`
+- Create: `Z:\Repositories\safe-delete-advisor\tests\test_engine_ncdu.py`
+- Create: `Z:\Repositories\safe-delete-advisor\scripts\dgx\verify_ncdu.sh`
 
 - [ ] **Step 1: Write the failing engine tests**
 
 ```python
 from pathlib import Path
 
-from disk_audit_dgx.engine_ncdu import build_ncdu_export_command, detect_ncdu
+from safe_delete_advisor.engine_ncdu import build_ncdu_export_command, detect_ncdu
 
 
 def test_detect_ncdu_returns_none_when_binary_missing() -> None:
@@ -304,17 +304,17 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/disk_audit_dgx/models.py src/disk_audit_dgx/engine_ncdu.py tests/test_engine_ncdu.py scripts/dgx/verify_ncdu.sh
+git add src/safe_delete_advisor/models.py src/safe_delete_advisor/engine_ncdu.py tests/test_engine_ncdu.py scripts/dgx/verify_ncdu.sh
 git commit -m "feat: add ncdu engine detection and command builder"
 ```
 
 ### Task 3: Parse `ncdu` JSON Export Into Normalized Nodes
 
 **Files:**
-- Create: `Z:\Repositories\disk-audit-dgx\tests\fixtures\ncdu_minimal_export.json`
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\ncdu_json.py`
-- Modify: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\models.py`
-- Create: `Z:\Repositories\disk-audit-dgx\tests\test_ncdu_json.py`
+- Create: `Z:\Repositories\safe-delete-advisor\tests\fixtures\ncdu_minimal_export.json`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\ncdu_json.py`
+- Modify: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\models.py`
+- Create: `Z:\Repositories\safe-delete-advisor\tests\test_ncdu_json.py`
 
 - [ ] **Step 1: Write the failing parser test with a fixed fixture**
 
@@ -357,7 +357,7 @@ git commit -m "feat: add ncdu engine detection and command builder"
 ```python
 from pathlib import Path
 
-from disk_audit_dgx.ncdu_json import parse_ncdu_export
+from safe_delete_advisor.ncdu_json import parse_ncdu_export
 
 
 def test_parse_ncdu_export_flattens_directory_tree() -> None:
@@ -407,7 +407,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from disk_audit_dgx.models import NormalizedNode, ParsedExport
+from safe_delete_advisor.models import NormalizedNode, ParsedExport
 
 
 def parse_ncdu_export(export_path: Path) -> ParsedExport:
@@ -457,24 +457,24 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/fixtures/ncdu_minimal_export.json src/disk_audit_dgx/models.py src/disk_audit_dgx/ncdu_json.py tests/test_ncdu_json.py
+git add tests/fixtures/ncdu_minimal_export.json src/safe_delete_advisor/models.py src/safe_delete_advisor/ncdu_json.py tests/test_ncdu_json.py
 git commit -m "feat: parse ncdu json exports into normalized nodes"
 ```
 
 ### Task 4: Implement Risk Classification And Compact Reports
 
 **Files:**
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\risk.py`
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\reporting.py`
-- Create: `Z:\Repositories\disk-audit-dgx\tests\test_risk.py`
-- Create: `Z:\Repositories\disk-audit-dgx\tests\test_reporting.py`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\risk.py`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\reporting.py`
+- Create: `Z:\Repositories\safe-delete-advisor\tests\test_risk.py`
+- Create: `Z:\Repositories\safe-delete-advisor\tests\test_reporting.py`
 
 - [ ] **Step 1: Write the failing risk and reporting tests**
 
 ```python
-from disk_audit_dgx.models import NormalizedNode
-from disk_audit_dgx.reporting import build_top_lists
-from disk_audit_dgx.risk import classify_path
+from safe_delete_advisor.models import NormalizedNode
+from safe_delete_advisor.reporting import build_top_lists
+from safe_delete_advisor.risk import classify_path
 
 
 def test_classify_path_marks_system_prefix_as_do_not_touch() -> None:
@@ -525,7 +525,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from disk_audit_dgx.models import NormalizedNode
+from safe_delete_advisor.models import NormalizedNode
 
 
 @dataclass(frozen=True)
@@ -550,22 +550,22 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/disk_audit_dgx/risk.py src/disk_audit_dgx/reporting.py tests/test_risk.py tests/test_reporting.py
+git add src/safe_delete_advisor/risk.py src/safe_delete_advisor/reporting.py tests/test_risk.py tests/test_reporting.py
 git commit -m "feat: add risk classification and compact reports"
 ```
 
 ### Task 5: Build The CLI And Output Writers
 
 **Files:**
-- Create: `Z:\Repositories\disk-audit-dgx\src\disk_audit_dgx\cli.py`
-- Create: `Z:\Repositories\disk-audit-dgx\tests\test_cli.py`
+- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\cli.py`
+- Create: `Z:\Repositories\safe-delete-advisor\tests\test_cli.py`
 
 - [ ] **Step 1: Write the failing CLI smoke test**
 
 ```python
 from pathlib import Path
 
-from disk_audit_dgx.cli import main
+from safe_delete_advisor.cli import main
 
 
 def test_cli_summarize_export_writes_summary_files(tmp_path: Path) -> None:
@@ -606,14 +606,14 @@ import csv
 import json
 from pathlib import Path
 
-from disk_audit_dgx.config import load_settings
-from disk_audit_dgx.ncdu_json import parse_ncdu_export
-from disk_audit_dgx.reporting import build_top_lists
-from disk_audit_dgx.risk import classify_path
+from safe_delete_advisor.config import load_settings
+from safe_delete_advisor.ncdu_json import parse_ncdu_export
+from safe_delete_advisor.reporting import build_top_lists
+from safe_delete_advisor.risk import classify_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="disk-audit-dgx")
+    parser = argparse.ArgumentParser(prog="safe-delete-advisor")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     summarize = subparsers.add_parser("summarize-export")
@@ -684,17 +684,17 @@ Expected: PASS
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/disk_audit_dgx/cli.py tests/test_cli.py
+git add src/safe_delete_advisor/cli.py tests/test_cli.py
 git commit -m "feat: add summarize-export cli workflow"
 ```
 
 ### Task 6: Add DGX Runtime Wrappers And Perform Live Verification
 
 **Files:**
-- Create: `Z:\Repositories\disk-audit-dgx\scripts\dgx\install_ncdu.sh`
-- Create: `Z:\Repositories\disk-audit-dgx\scripts\dgx\run_audit.sh`
-- Modify: `Z:\Repositories\disk-audit-dgx\README.md`
-- Modify: `Z:\Repositories\disk-audit-dgx\.agent\HANDOFF.md`
+- Create: `Z:\Repositories\safe-delete-advisor\scripts\dgx\install_ncdu.sh`
+- Create: `Z:\Repositories\safe-delete-advisor\scripts\dgx\run_audit.sh`
+- Modify: `Z:\Repositories\safe-delete-advisor\README.md`
+- Modify: `Z:\Repositories\safe-delete-advisor\.agent\HANDOFF.md`
 
 - [ ] **Step 1: Write the guarded DGX scripts**
 
@@ -728,7 +728,7 @@ RAW_EXPORT="$RUN_DIR/ncdu-export.json"
 mkdir -p "$RUN_DIR"
 bash "$REPO_ROOT/scripts/dgx/verify_ncdu.sh"
 ncdu -o "$RAW_EXPORT" -x /
-python -m disk_audit_dgx.cli summarize-export \
+python -m safe_delete_advisor.cli summarize-export \
   --export "$RAW_EXPORT" \
   --output-dir "$RUN_DIR" \
   --config "$REPO_ROOT/config/defaults.json"
@@ -785,3 +785,5 @@ git commit -m "feat: add dgx runtime wrappers and live audit flow"
 - **Spec coverage:** covered config, `ncdu` verification path, raw export parsing, compact summarization, risk classification, read-only DGX run, and sudo stop condition.
 - **Placeholder scan:** no `TBD`, `TODO`, or omitted implementation sections remain in this plan.
 - **Type consistency:** the plan uses `Settings`, `EngineInfo`, `NormalizedNode`, `ParsedExport`, `TopLists`, and `main()` consistently across all tasks.
+
+

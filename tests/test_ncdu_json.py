@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from disk_audit_dgx.ncdu_json import parse_ncdu_export
+from safe_delete_advisor.ncdu_json import parse_ncdu_export
 
 
 def test_parse_ncdu_export_flattens_directory_tree() -> None:

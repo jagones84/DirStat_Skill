@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from disk_audit_dgx.models import NormalizedNode
+from safe_delete_advisor.models import NormalizedNode
 
 
 @dataclass(frozen=True)

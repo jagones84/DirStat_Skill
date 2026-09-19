@@ -1,8 +1,6 @@
-# disk-audit-dgx
+# safe-delete-advisor
 
-Read-only disk space audit pipeline for DGX/Linux hosts, optimized for low-token AI analysis.
-
-Public skill identity: `safe-delete-advisor`
+Tired of wasting tens of GB on forgotten AI models, bloated caches, and files you have not touched since the Cold War? Here is the safe, read-only answer.
 
 ## Goal
 
@@ -23,8 +21,7 @@ This repository is also packaged as an agent skill.
 - skill path: `.trae/skills/safe-delete-advisor/SKILL.md`
 - agent entrypoint: `AGENTS.md`
 
-The repo name stays `disk-audit-dgx` for now to preserve existing script paths and DGX absolute command examples.
-The public-facing name that should be used for discoverability is `safe-delete-advisor`.
+The repository, package, and skill now use the same public-facing name: `safe-delete-advisor`.
 
 ## Non-Goals
 
@@ -46,7 +43,7 @@ This keeps the core pipeline reusable even if the scan engine changes later, inc
 
 ## Repository Layout
 
-- `.agent/`: short-term memory, research notes, operational handoff
+- `.agent/`: local-only operator memory, ignored from git
 - `.trae/skills/`: repository-local agent skills
 - `config/`: thresholds, exclusions, policy settings
 - `docs/`: specs and longer-form design notes
@@ -55,6 +52,18 @@ This keeps the core pipeline reusable even if the scan engine changes later, inc
 - `src/`: parsers, classifiers, report generation
 - `tests/`: focused tests for parser and policy logic
 - `trash/`: temporary or discarded experiments
+
+## What Stays Out Of Git
+
+- `.agent/`: volatile local memory and handoff notes
+- `outputs/`: generated audit results
+- `trash/`: disposable scratch space
+
+## What Stays In Git
+
+- `tests/`: they prove the parser and risk logic work
+- `.trae/skills/`: core part of the product identity
+- `AGENTS.md`: public agent entrypoint for the repository
 
 ## Planned Workflow
 
@@ -83,20 +92,22 @@ The repository is explicitly designed to avoid wasting tokens:
 
 ## Commands
 
-- prepare Linux scripts on DGX: `ssh dgx bash /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/prepare_linux_scripts.sh`
-- verify `ncdu`: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/verify_ncdu.sh`
-- guarded install attempt: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/install_ncdu.sh`
-- live audit run: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/run_audit.sh`
-- show latest audit outputs: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/show_latest_audit.sh`
-- find safer deletion candidates: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/find_safe_candidates.sh`
+- prepare Linux scripts on DGX: `ssh dgx bash /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/prepare_linux_scripts.sh`
+- verify `ncdu`: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/verify_ncdu.sh`
+- guarded install attempt: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/install_ncdu.sh`
+- live audit run: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/run_audit.sh`
+- show latest audit outputs: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/show_latest_audit.sh`
+- find safer deletion candidates: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/find_safe_candidates.sh`
 
 ## Status
 
 - repository skeleton created
 - design spec written
-- implementation in progress
-- Python pipeline implemented and tests passing
+- implementation completed for the current `v1` scope
+- Python pipeline implemented and local tests passing: `8 passed`
 - DGX verify completed: `ncdu` installed and detected
 - live audit run completed successfully
+- post-rename DGX verification completed successfully
+- latest verified run: `/home/jagones/Repositories/safe-delete-advisor/outputs/20260919_1321_audit`
 - safe-candidate helper identifies large cache, partial-download, and trash files
 - skill packaging added for agent reuse

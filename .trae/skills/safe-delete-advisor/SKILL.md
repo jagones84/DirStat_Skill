@@ -18,6 +18,11 @@ It audits disk usage, reads compact reports, and produces a shortlist of:
 
 The current `v1` runtime target is DGX/Linux with `ncdu`.
 
+Marketing promise:
+
+- tired of wasting tens of GB on forgotten AI models, huge caches, and files you have not touched since the Cold War?
+- this workflow gives a safe, read-only shortlist instead of blind cleanup
+
 ## When to Use
 
 Use this skill when:
@@ -47,7 +52,7 @@ Do not use this skill when:
 ## Repository Entry Points
 
 - `README.md`: project overview and commands
-- `.agent/HANDOFF.md`: latest operational state and known blockers
+- local `.agent/HANDOFF.md` if present: volatile operator memory, not required for the public repository
 - `scripts/dgx/prepare_linux_scripts.sh`: normalize LF and set executable bits
 - `scripts/dgx/verify_ncdu.sh`: verify `ncdu` on the DGX host
 - `scripts/dgx/install_ncdu.sh`: guarded install path
@@ -62,7 +67,7 @@ Do not use this skill when:
 Read:
 
 - `README.md`
-- `.agent/HANDOFF.md`
+- local `.agent/HANDOFF.md` only if it exists in the current working copy
 
 If the repo already contains recent audit results or blockers, continue from there instead of redoing the whole flow.
 
@@ -71,7 +76,7 @@ If the repo already contains recent audit results or blockers, continue from the
 Run:
 
 ```bash
-ssh dgx bash /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/prepare_linux_scripts.sh
+ssh dgx bash /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/prepare_linux_scripts.sh
 ```
 
 Expected:
@@ -83,7 +88,7 @@ Expected:
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/verify_ncdu.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/verify_ncdu.sh
 ```
 
 Expected:
@@ -94,7 +99,7 @@ Expected:
 If missing, use:
 
 ```bash
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/install_ncdu.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/install_ncdu.sh
 ```
 
 If this path still requires operator privileges, stop and ask for them. Do not invent package-manager shortcuts outside repo workflow.
@@ -104,7 +109,7 @@ If this path still requires operator privileges, stop and ask for them. Do not i
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/run_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/run_audit.sh
 ```
 
 Expected:
@@ -118,7 +123,7 @@ Expected:
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/show_latest_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/show_latest_audit.sh
 ```
 
 Read in this order:
@@ -135,7 +140,7 @@ Do **not** start from the raw export unless the compact reports are missing or c
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/find_safe_candidates.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/find_safe_candidates.sh
 ```
 
 This helper focuses on the highest-confidence deletion classes:
@@ -199,17 +204,13 @@ The final answer should always contain:
 ## Quick Reference
 
 ```bash
-ssh dgx bash /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/prepare_linux_scripts.sh
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/verify_ncdu.sh
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/run_audit.sh
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/show_latest_audit.sh
-ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/find_safe_candidates.sh
+ssh dgx bash /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/prepare_linux_scripts.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/verify_ncdu.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/run_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/show_latest_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/find_safe_candidates.sh
 ```
 
 ## Current Naming
 
-The repository path is still `disk-audit-dgx` for compatibility with existing scripts and absolute paths.
-
-The **public skill identity** is `safe-delete-advisor`.
-
-If the project is later renamed for GitHub positioning, update the hardcoded absolute repository paths inside the DGX command examples and helper scripts.
+The repository, package, and public skill identity are all `safe-delete-advisor`.

@@ -5,14 +5,14 @@ import csv
 import json
 from pathlib import Path
 
-from disk_audit_dgx.config import load_settings
-from disk_audit_dgx.ncdu_json import parse_ncdu_export
-from disk_audit_dgx.reporting import build_top_lists
-from disk_audit_dgx.risk import classify_path
+from safe_delete_advisor.config import load_settings
+from safe_delete_advisor.ncdu_json import parse_ncdu_export
+from safe_delete_advisor.reporting import build_top_lists
+from safe_delete_advisor.risk import classify_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="disk-audit-dgx")
+    parser = argparse.ArgumentParser(prog="safe-delete-advisor")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     summarize = subparsers.add_parser("summarize-export")

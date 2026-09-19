@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from disk_audit_dgx.config import load_settings
+from safe_delete_advisor.config import load_settings
 
 
 def test_load_settings_reads_defaults_and_overrides(tmp_path: Path) -> None:
