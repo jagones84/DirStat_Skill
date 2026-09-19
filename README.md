@@ -18,7 +18,7 @@ Version `v1` targets DGX/Linux ARM and uses `ncdu` as the initial scan engine.
 This repository is also packaged as an agent skill.
 
 - skill name: `safe-delete-advisor-skill`
-- skill path: `.trae/skills/safe-delete-advisor-skill/SKILL.md`
+- skill path: `skills/safe-delete-advisor-skill/SKILL.md`
 - agent entrypoint: `AGENTS.md`
 
 The public repository and skill identity use `safe-delete-advisor-skill`.
