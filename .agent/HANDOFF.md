@@ -36,6 +36,11 @@ Create a standalone GitHub-ready repository in `Z:\Repositories\disk-audit-dgx` 
   - large cache blobs under `/home/jagones/.cache`
   - partial downloads such as `*.filepart`
   - trash content under `/home/jagones/.local/share/Trash/files`
+- packaged the repository as a reusable agent skill:
+  - `.trae/skills/safe-delete-advisor/SKILL.md`
+  - `AGENTS.md`
+- kept repository path `disk-audit-dgx` unchanged for path compatibility
+- chose `safe-delete-advisor` as the public skill identity for GitHub/discovery
 
 ## Next Steps
 
@@ -43,6 +48,7 @@ Create a standalone GitHub-ready repository in `Z:\Repositories\disk-audit-dgx` 
 2. If desired, delete trash and cache candidates in descending size order.
 3. Re-run `scripts/dgx/run_audit.sh` after cleanup to measure reclaimed space.
 4. Optionally add deeper dependency probes for non-cache model files under `Programs/llama_cp` and `ComfyUI/models`.
+5. If the repo is rebranded on GitHub later, update absolute DGX paths in skill and script docs.
 
 ## Constraints
 

@@ -2,6 +2,8 @@
 
 Read-only disk space audit pipeline for DGX/Linux hosts, optimized for low-token AI analysis.
 
+Public skill identity: `safe-delete-advisor`
+
 ## Goal
 
 This repository provides a reproducible workflow to:
@@ -12,6 +14,17 @@ This repository provides a reproducible workflow to:
 - produce a shortlist for human review before any cleanup
 
 Version `v1` targets DGX/Linux ARM and uses `ncdu` as the initial scan engine.
+
+## Skill Identity
+
+This repository is also packaged as an agent skill.
+
+- skill name: `safe-delete-advisor`
+- skill path: `.trae/skills/safe-delete-advisor/SKILL.md`
+- agent entrypoint: `AGENTS.md`
+
+The repo name stays `disk-audit-dgx` for now to preserve existing script paths and DGX absolute command examples.
+The public-facing name that should be used for discoverability is `safe-delete-advisor`.
 
 ## Non-Goals
 
@@ -34,6 +47,7 @@ This keeps the core pipeline reusable even if the scan engine changes later, inc
 ## Repository Layout
 
 - `.agent/`: short-term memory, research notes, operational handoff
+- `.trae/skills/`: repository-local agent skills
 - `config/`: thresholds, exclusions, policy settings
 - `docs/`: specs and longer-form design notes
 - `outputs/`: dated audit runs
@@ -85,3 +99,4 @@ The repository is explicitly designed to avoid wasting tokens:
 - DGX verify completed: `ncdu` installed and detected
 - live audit run completed successfully
 - safe-candidate helper identifies large cache, partial-download, and trash files
+- skill packaging added for agent reuse
