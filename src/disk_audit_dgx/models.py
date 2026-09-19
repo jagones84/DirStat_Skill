@@ -8,3 +8,18 @@ from pathlib import Path
 class EngineInfo:
     binary: str
     resolved_path: Path
+
+
+@dataclass(frozen=True)
+class NormalizedNode:
+    path: str
+    name: str
+    is_dir: bool
+    asize: int
+    dsize: int
+
+
+@dataclass(frozen=True)
+class ParsedExport:
+    root_path: str
+    nodes: list[NormalizedNode]
