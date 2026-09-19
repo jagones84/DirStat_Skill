@@ -29,6 +29,8 @@ def test_cli_summarize_export_writes_summary_files(tmp_path: Path) -> None:
     assert (output_dir / "top_dirs.csv").exists()
     assert (output_dir / "top_files.csv").exists()
     assert (output_dir / "candidates.json").exists()
+    assert (output_dir / "deletion_candidates.csv").exists()
+    assert (output_dir / "deletion_report.md").exists()
 
 
 def test_python_module_cli_writes_summary_files(tmp_path: Path) -> None:
@@ -61,7 +63,7 @@ def test_python_module_cli_writes_summary_files(tmp_path: Path) -> None:
     assert (output_dir / "summary.md").exists()
 
 
-def test_cli_audit_command_writes_summary_bundle(tmp_path: Path) -> None:
+def test_cli_audit_command_writes_recursive_deletion_bundle(tmp_path: Path) -> None:
     target_root = tmp_path / "audit-root"
     target_root.mkdir()
     (target_root / "blob.bin").write_bytes(b"x" * 32)
@@ -86,6 +88,8 @@ def test_cli_audit_command_writes_summary_bundle(tmp_path: Path) -> None:
     assert (output_dir / "top_dirs.csv").exists()
     assert (output_dir / "top_files.csv").exists()
     assert (output_dir / "candidates.json").exists()
+    assert (output_dir / "deletion_candidates.csv").exists()
+    assert (output_dir / "deletion_report.md").exists()
     assert (output_dir / "run.log").exists()
 
 

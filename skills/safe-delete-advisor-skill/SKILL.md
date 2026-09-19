@@ -16,6 +16,8 @@ It audits disk usage, reads compact reports, and produces a shortlist of:
 - inspect before delete
 - do not touch
 
+The reporting flow now emits a recursive deletion dossier instead of relying on a flat top-10 style shortlist.
+
 Marketing promise:
 
 - tired of wasting tens of GB on forgotten AI models, huge caches, and files you have not touched since the Cold War?
@@ -90,6 +92,8 @@ Expected:
 - `top_dirs.csv`
 - `top_files.csv`
 - `candidates.json`
+- `deletion_candidates.csv`
+- `deletion_report.md`
 - `run.log`
 
 To scan more than one target on Windows:
@@ -144,6 +148,8 @@ bash scripts/linux/show_latest_audit.sh
 
 Read in this order:
 
+- `deletion_report.md`
+- `deletion_candidates.csv`
 - `summary.md`
 - `top_dirs.csv`
 - `top_files.csv`
@@ -182,6 +188,17 @@ Use these buckets:
   - `/etc`, `/usr`, `/boot`, `/var/lib`
   - anything clearly part of runtime/system storage
 
+### 9.1 Recursive 80/20 Walk
+
+The selector should:
+
+- start from the heaviest roots or macrofolders
+- keep the children that explain about `80%` of each dominant branch
+- recurse into dominant subtrees
+- emit all concrete candidates found in those dominant subtrees, even when many medium files matter together
+
+This avoids the classic failure mode where a flat top list misses dozens of 1-5 GB deletable files that dominate space as a group.
+
 ### 9. Produce The Final Suggestion
 
 Return a deletion suggestion list grouped by:
@@ -212,6 +229,7 @@ The final answer should always contain:
 - the safest candidates first
 - anything large that should *not* be deleted blindly
 - the main reason for each recommendation
+- a dependency-check summary for each emitted candidate
 
 ## Common Mistakes
 
@@ -220,6 +238,7 @@ The final answer should always contain:
 - deleting Docker or swap storage
 - skipping compact outputs and jumping directly to live assets
 - reporting only file names without full paths
+- omitting the dependency-check rationale
 - treating “large” as equal to “safe to remove”
 
 ## Quick Reference

@@ -42,10 +42,12 @@ If the user sounds like this, this repo is the intended path:
   - `audit`
 - use `scripts/linux/` only for Linux convenience flows
 - read compact outputs before raw exports
+- read `deletion_report.md` before the diagnostic CSV files
 - classify findings into:
   - `delete first`
   - `inspect before delete`
   - `do not touch`
+- require a reason and dependency-check summary for every deletion candidate
 - prefer partial downloads, trash, and cache as first deletion candidates
 - do not suggest deleting Docker storage, swap, or obvious system paths blindly
 - do not assume the whole machine must be scanned; prefer explicit `--path` targets

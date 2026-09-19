@@ -1,6 +1,8 @@
 {
   "top_n": 50,
   "min_bytes": 1073741824,
+  "dominant_percent": 0.8,
+  "min_candidate_bytes": 1073741824,
   "one_file_system": true,
   "exclude_patterns": [
     ".cache",
@@ -24,6 +26,17 @@
     "C:\\Windows",
     "C:\\Program Files",
     "C:\\Program Files (x86)"
+  ],
+  "max_nearby_reference_files": 25,
+  "nearby_reference_extensions": [
+    ".json",
+    ".yaml",
+    ".yml",
+    ".txt",
+    ".md",
+    ".py",
+    ".sh",
+    ".bat"
   ],
   "default_engine_windows": "windows-native",
   "default_engine_linux": "ncdu"

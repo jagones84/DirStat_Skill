@@ -11,8 +11,9 @@ It helps humans and agents:
 - scan one or more explicit paths on Windows or Linux
 - keep raw scan data on disk instead of dumping it into an LLM
 - generate compact summaries first
-- classify large paths into `delete first`, `inspect before delete`, and `do not touch`
-- produce a shortlist for review before any cleanup
+- follow dominant branches recursively with an 80/20 walk
+- classify deletion candidates into `delete first`, `inspect before delete`, and `do not touch`
+- produce a full deletion dossier with reasons and dependency-check notes before any cleanup
 
 It does **not** delete automatically.
 
@@ -34,9 +35,9 @@ It does **not** delete automatically.
 This repo is explicitly built to avoid stupid token burn:
 
 - raw exports stay on disk
-- the first pass reads `summary.md`, `top_dirs.csv`, `top_files.csv`, and `candidates.json`
-- reviews start from top `N` and size thresholds
-- drill-down happens path by path, not by dumping the whole tree
+- the first pass reads `deletion_report.md`, `deletion_candidates.csv`, `summary.md`, and `candidates.json`
+- reviews start from dominant branches, not from a flat global top-10
+- drill-down happens path by path with a recursive 80/20 walk
 - agents should read raw exports only when the compact outputs are missing or inconsistent
 
 ## Output Contract
@@ -48,6 +49,8 @@ Every audit run writes a bundle under `outputs/<stamp>_audit/`:
 - `top_dirs.csv`
 - `top_files.csv`
 - `candidates.json`
+- `deletion_candidates.csv`
+- `deletion_report.md`
 - `run.log`
 
 ## Installation
@@ -133,6 +136,31 @@ Real runs already verified with this repository:
   - package stores
   - swap, Docker backing storage, OS directories
 
+## Deletion Dossier
+
+The final deletion contract is no longer just a flat leaderboard.
+
+- `deletion_report.md`
+  - human-readable dossier
+  - grouped by `delete first`, `inspect before delete`, `do not touch`
+  - includes full paths, reasons, and dependency-check summaries
+- `deletion_candidates.csv`
+  - structured flat export for spreadsheets and scripts
+- `candidates.json`
+  - machine-readable version for agent workflows
+
+The selector follows a recursive 80/20 rule:
+
+- find the children that explain about `80%` of each dominant branch
+- keep descending while the branch stays dominant
+- emit all relevant candidates from that walk, including many medium-size files when they dominate together
+
+Dependency checks are cheap and local by default:
+
+- heuristic signatures for cache/temp/trash/partial/system paths
+- nearby reference scan for ambiguous user-owned assets
+- optional broader scan only when an agent chooses to escalate on uncertain macrofolders
+
 ## Repository Layout
 
 - `skills/safe-delete-advisor-skill/`: public skill entrypoint
@@ -179,3 +207,4 @@ Kept in git:
 - raw export bridge implemented for Windows and `ncdu`
 - recursive `ncdu` directory sizing fixed for meaningful `top_dirs.csv` results
 - generic CLI now supports `scan`, `summarize-export`, and `audit`
+- recursive deletion dossier emitted under `outputs/` with reasons and dependency-check summaries

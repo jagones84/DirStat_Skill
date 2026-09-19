@@ -11,9 +11,14 @@ from safe_delete_advisor.config import load_settings
 from safe_delete_advisor.engine_ncdu import build_ncdu_export_command, detect_ncdu
 from safe_delete_advisor.engine_windows import build_windows_export_for_targets
 from safe_delete_advisor.logging_utils import configure_run_logger
-from safe_delete_advisor.reporting import build_top_lists
+from safe_delete_advisor.reporting import (
+    build_deletion_candidates,
+    build_top_lists,
+    render_deletion_report,
+    select_dominant_candidates_for_roots,
+    write_deletion_candidates_csv,
+)
 from safe_delete_advisor.raw_export import parse_export
-from safe_delete_advisor.risk import classify_path
 from safe_delete_advisor.targets import normalize_targets
 
 
@@ -72,21 +77,20 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
     )
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    candidates = []
-    for node in top_lists.top_dirs + top_lists.top_files:
-        candidates.append(
-            {
-                "path": node.path,
-                "dsize": node.dsize,
-                "is_dir": node.is_dir,
-                "risk": classify_path(
-                    node.path,
-                    settings.risk_do_not_touch_prefixes
-                    + settings.windows_do_not_touch_prefixes,
-                    settings.risk_needs_inspection_prefixes,
-                ),
-            }
-        )
+    selected_nodes = select_dominant_candidates_for_roots(
+        nodes=parsed.nodes,
+        dominant_percent=settings.dominant_percent,
+        min_candidate_bytes=settings.min_candidate_bytes,
+    )
+    candidates = build_deletion_candidates(
+        selected_nodes=selected_nodes,
+        all_nodes=parsed.nodes,
+        protected_prefixes=settings.risk_do_not_touch_prefixes
+        + settings.windows_do_not_touch_prefixes,
+        inspection_prefixes=settings.risk_needs_inspection_prefixes,
+        nearby_reference_extensions=settings.nearby_reference_extensions,
+        max_nearby_reference_files=settings.max_nearby_reference_files,
+    )
 
     (output_dir / "summary.md").write_text(
         "# Audit Summary\n\n"
@@ -109,7 +113,12 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
             writer.writerow({"path": node.path, "dsize": node.dsize})
 
     (output_dir / "candidates.json").write_text(
-        json.dumps(candidates, indent=2),
+        json.dumps([candidate.__dict__ for candidate in candidates], indent=2),
+        encoding="utf-8",
+    )
+    write_deletion_candidates_csv(output_dir / "deletion_candidates.csv", candidates)
+    (output_dir / "deletion_report.md").write_text(
+        render_deletion_report(parsed.root_path, candidates),
         encoding="utf-8",
     )
     return 0
