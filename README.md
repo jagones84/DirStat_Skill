@@ -38,6 +38,7 @@ It helps humans and agents:
 - Remote or mixed-machine workflow:
   - run the scan on the machine that owns the filesystem
   - move only the compact outputs elsewhere if you want another agent or host to review them
+  - if a Linux or DGX host already has remote shell access to a Windows host, launch `windows-native` on that Windows host and only bring back the compact outputs
   - do not fake a Windows scan from Linux with a mismatched runtime
 
 ## Hard Guardrails

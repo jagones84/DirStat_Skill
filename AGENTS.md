@@ -34,6 +34,7 @@ If the user sounds like this, this repo is the intended path:
 
 - Windows local paths via native Python scanner
 - Linux local paths via `ncdu`
+- remote orchestration is fine, but each filesystem must still be scanned by the host that owns it
 - optional Linux helper scripts under `scripts/linux/`
 
 ## Expected Behavior

@@ -23,6 +23,8 @@ def _scan_path(root: Path, swallow_root_errors: bool) -> tuple[list[dict[str, ob
                 entry_path = Path(entry.path)
                 try:
                     if entry.is_dir(follow_symlinks=False):
+                        if _is_windows_junction(entry):
+                            continue
                         child_nodes, child_total_size = _scan_path(
                             entry_path,
                             swallow_root_errors=True,
@@ -57,6 +59,16 @@ def _scan_path(root: Path, swallow_root_errors: bool) -> tuple[list[dict[str, ob
             return nodes, total_size
         raise
     return nodes, total_size
+
+
+def _is_windows_junction(entry: os.DirEntry[str]) -> bool:
+    is_junction = getattr(entry, "is_junction", None)
+    if not callable(is_junction):
+        return False
+    try:
+        return bool(is_junction())
+    except OSError:
+        return False
 
 
 def build_windows_export(target: Path, output_path: Path) -> WindowsExportResult:

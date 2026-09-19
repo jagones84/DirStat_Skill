@@ -89,6 +89,7 @@ If the repo already contains recent audit results or blockers, continue from the
 - On remote or mixed-machine setups:
   - run the scan on the machine that owns the filesystem
   - move only the compact outputs elsewhere for review
+  - if a Linux or DGX host already has remote shell access to a Windows host, launch the `windows-native` CLI on that Windows host instead of scanning a mounted Windows path from Linux
   - do not force Linux `ncdu` onto Windows-style paths or Windows runtime onto Linux-style paths
 
 ### 3. Windows Read-Only Audit
