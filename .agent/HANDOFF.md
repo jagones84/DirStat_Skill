@@ -11,14 +11,25 @@ Create a standalone GitHub-ready repository in `Z:\Repositories\disk-audit-dgx` 
 - wrote `.gitignore`
 - wrote `.env.template`
 - wrote initial design spec under `docs/superpowers/specs/`
+- wrote implementation plan under `docs/superpowers/plans/`
+- implemented Python config loader, engine adapter, parser, risk classifier, compact reporting, and CLI
+- local test suite passing: `7 passed`
+- created DGX scripts:
+  - `scripts/dgx/verify_ncdu.sh`
+  - `scripts/dgx/install_ncdu.sh`
+  - `scripts/dgx/run_audit.sh`
+  - `scripts/dgx/prepare_linux_scripts.sh`
+- prepared Linux scripts on DGX with LF normalization and `chmod +x`
+- verified on DGX that `ncdu` is missing from `PATH`
+- verified guarded install path stops correctly when `sudo` password is required
 
 ## Next Steps
 
-1. User reviews the design spec.
-2. Write the implementation plan.
-3. Verify whether `ncdu` is already installed on DGX.
-4. If missing, attempt installation only through supported system paths.
-5. Stop immediately if `sudo` is required and credentials are not available interactively.
+1. Receive operator sudo input outside the repository.
+2. Re-run `scripts/dgx/install_ncdu.sh` on DGX.
+3. Re-run `scripts/dgx/verify_ncdu.sh`.
+4. Run `scripts/dgx/run_audit.sh`.
+5. Review generated outputs under `outputs/`.
 
 ## Constraints
 
@@ -30,6 +41,15 @@ Create a standalone GitHub-ready repository in `Z:\Repositories\disk-audit-dgx` 
 
 ## Known Open Questions
 
-- whether DGX already has `ncdu` installed
-- whether package installation requires `sudo`
-- exact raw export format chosen for v1 normalization
+- exact sudo handoff method for the installation step
+
+## Observed Results
+
+- `ssh dgx bash /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/prepare_linux_scripts.sh`
+  - result: `prepared_linux_scripts=yes`
+- `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/verify_ncdu.sh`
+  - result: `ERROR: ncdu not found in PATH`
+  - exit code: `127`
+- `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/install_ncdu.sh`
+  - result: `ERROR: sudo password required; installation must be performed with operator input`
+  - exit code: `4`

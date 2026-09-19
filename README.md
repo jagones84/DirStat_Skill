@@ -67,8 +67,18 @@ The repository is explicitly designed to avoid wasting tokens:
 - if system installation requires `sudo` and no passwordless path exists, the workflow must stop and request operator input
 - the first implementation must remain read-only
 
+## Commands
+
+- prepare Linux scripts on DGX: `ssh dgx bash /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/prepare_linux_scripts.sh`
+- verify `ncdu`: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/verify_ncdu.sh`
+- guarded install attempt: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/install_ncdu.sh`
+- live audit run: `ssh dgx /home/jagones/Repositories/disk-audit-dgx/scripts/dgx/run_audit.sh`
+
 ## Status
 
 - repository skeleton created
-- design spec pending review
-- implementation not started
+- design spec written
+- implementation in progress
+- Python pipeline implemented and tests passing
+- DGX verify completed: `ncdu` missing from PATH
+- install blocked pending interactive sudo input
