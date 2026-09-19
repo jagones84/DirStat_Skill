@@ -1,0 +1,23 @@
+{
+  "top_n": 50,
+  "min_bytes": 1073741824,
+  "one_file_system": true,
+  "exclude_patterns": [
+    ".cache",
+    "node_modules",
+    "__pycache__"
+  ],
+  "risk_do_not_touch_prefixes": [
+    "/etc",
+    "/usr",
+    "/boot",
+    "/var/lib"
+  ],
+  "risk_needs_inspection_prefixes": [
+    "/opt",
+    "/srv",
+    "/var/log",
+    "/var/tmp",
+    "/home"
+  ]
+}
