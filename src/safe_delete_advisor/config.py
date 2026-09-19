@@ -13,6 +13,9 @@ class Settings:
     exclude_patterns: list[str]
     risk_do_not_touch_prefixes: list[str]
     risk_needs_inspection_prefixes: list[str]
+    windows_do_not_touch_prefixes: list[str]
+    default_engine_windows: str
+    default_engine_linux: str
 
 
 def load_settings(
@@ -28,4 +31,7 @@ def load_settings(
         exclude_patterns=list(payload["exclude_patterns"]),
         risk_do_not_touch_prefixes=list(payload["risk_do_not_touch_prefixes"]),
         risk_needs_inspection_prefixes=list(payload["risk_needs_inspection_prefixes"]),
+        windows_do_not_touch_prefixes=list(payload["windows_do_not_touch_prefixes"]),
+        default_engine_windows=str(payload["default_engine_windows"]),
+        default_engine_linux=str(payload["default_engine_linux"]),
     )

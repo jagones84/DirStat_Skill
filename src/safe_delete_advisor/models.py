@@ -23,3 +23,9 @@ class NormalizedNode:
 class ParsedExport:
     root_path: str
     nodes: list[NormalizedNode]
+
+
+@dataclass(frozen=True)
+class RawExportMetadata:
+    engine_name: str
+    root_paths: list[str]
