@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from dirstat_skill.models import NormalizedNode
+from dirstat_skill.models import AnalysisFinding, NormalizedNode
 from dirstat_skill.reporting import (
-    build_review_candidates,
+    build_analysis_findings,
     build_top_lists,
     render_review_report,
     select_dominant_candidates,
@@ -115,7 +115,7 @@ def test_select_dominant_candidates_for_roots_preserves_single_posix_root_tree()
     assert [item.path for item in selected] == ["/home/model.gguf"]
 
 
-def test_build_review_candidates_adds_reason_and_dependency_summary(tmp_path: Path) -> None:
+def test_build_analysis_findings_emits_analysis_kind_and_evidence(tmp_path: Path) -> None:
     cache_dir = tmp_path / ".cache"
     cache_dir.mkdir()
     blob_path = cache_dir / "blob.bin"
@@ -125,39 +125,46 @@ def test_build_review_candidates_adds_reason_and_dependency_summary(tmp_path: Pa
         NormalizedNode(path=str(blob_path), name="blob.bin", is_dir=False, asize=0, dsize=2000),
     ]
 
-    candidates = build_review_candidates(
+    findings = build_analysis_findings(
         selected_nodes=nodes,
         all_nodes=nodes,
         protected_prefixes=["/etc", "/usr", "/var/lib"],
         inspection_prefixes=[str(tmp_path)],
         nearby_reference_extensions=[".json", ".yaml"],
         max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
     )
 
-    assert candidates[0].review_reason
-    assert "cache" in candidates[0].dependency_check_summary.lower()
-    assert candidates[0].bucket == "review first"
+    assert findings[0].review_reason
+    assert findings[0].analysis_kind == "signature heuristics"
+    assert "cache" in findings[0].evidence.lower()
+    assert findings[0].attention_level == "review first"
+    assert findings[0].configured_dominant_percent == 0.8
 
 
-def test_build_review_candidates_marks_system_storage_as_keep_protected() -> None:
+def test_build_analysis_findings_marks_system_storage_as_path_safety() -> None:
     nodes = [
         NormalizedNode(path="/var/lib/docker-loop.xfs", name="docker-loop.xfs", is_dir=False, asize=0, dsize=2000),
     ]
 
-    candidates = build_review_candidates(
+    findings = build_analysis_findings(
         selected_nodes=nodes,
         all_nodes=nodes,
         protected_prefixes=["/etc", "/usr", "/var/lib"],
         inspection_prefixes=["/home"],
         nearby_reference_extensions=[".json", ".yaml"],
         max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
     )
 
-    assert candidates[0].bucket == "keep protected"
-    assert "protected" in candidates[0].dependency_check_summary.lower()
+    assert findings[0].analysis_kind == "path safety"
+    assert findings[0].attention_level == "keep protected"
+    assert "protected" in findings[0].evidence.lower()
 
 
-def test_build_review_candidates_marks_user_model_without_nearby_refs_as_review_carefully(
+def test_build_analysis_findings_marks_user_model_as_dominant_space(
     tmp_path: Path,
 ) -> None:
     model_dir = tmp_path / "models"
@@ -169,23 +176,102 @@ def test_build_review_candidates_marks_user_model_without_nearby_refs_as_review_
         NormalizedNode(path=str(model_path), name="model.gguf", is_dir=False, asize=0, dsize=2000),
     ]
 
-    candidates = build_review_candidates(
+    findings = build_analysis_findings(
         selected_nodes=nodes,
         all_nodes=nodes,
         protected_prefixes=["/etc", "/usr", "/var/lib"],
         inspection_prefixes=[str(tmp_path)],
         nearby_reference_extensions=[".json", ".yaml"],
         max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
     )
 
-    assert candidates[0].bucket == "review carefully"
-    assert "no nearby references" in candidates[0].dependency_check_summary.lower()
+    assert findings[0].analysis_kind == "dominant space"
+    assert findings[0].attention_level == "review carefully"
+    assert "dominant-space walk" in findings[0].evidence.lower()
 
 
-def test_render_review_report_groups_candidates_by_bucket(tmp_path: Path) -> None:
+def test_build_analysis_findings_surfaces_probable_duplicates(tmp_path: Path) -> None:
+    a_dir = tmp_path / "a"
+    b_dir = tmp_path / "b"
+    a_dir.mkdir()
+    b_dir.mkdir()
+    first = a_dir / "model.safetensors"
+    second = b_dir / "model.safetensors"
+    first.write_bytes(b"x")
+    second.write_bytes(b"y")
+
+    nodes = [
+        NormalizedNode(path=str(first), name="model.safetensors", is_dir=False, asize=0, dsize=2000),
+        NormalizedNode(path=str(second), name="model.safetensors", is_dir=False, asize=0, dsize=2000),
+    ]
+
+    findings = build_analysis_findings(
+        selected_nodes=[],
+        all_nodes=nodes,
+        protected_prefixes=["/etc", "/usr", "/var/lib"],
+        inspection_prefixes=[str(tmp_path)],
+        nearby_reference_extensions=[".json"],
+        max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
+    )
+
+    duplicate_findings = [item for item in findings if item.analysis_kind == "probable duplicates"]
+    assert len(duplicate_findings) == 2
+    assert duplicate_findings[0].group_key
+
+
+def test_build_analysis_findings_surfaces_protected_huge_hotspot() -> None:
+    nodes = [
+        NormalizedNode(path="/var/lib/docker-loop.xfs", name="docker-loop.xfs", is_dir=False, asize=0, dsize=2000),
+    ]
+
+    findings = build_analysis_findings(
+        selected_nodes=[],
+        all_nodes=nodes,
+        protected_prefixes=["/etc", "/usr", "/var/lib"],
+        inspection_prefixes=["/home"],
+        nearby_reference_extensions=[".json"],
+        max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
+    )
+
+    hotspot_findings = [item for item in findings if item.analysis_kind == "protected huge hotspots"]
+    assert len(hotspot_findings) == 1
+    assert hotspot_findings[0].attention_level == "keep protected"
+
+
+def test_render_review_report_shows_analysis_sections(tmp_path: Path) -> None:
+    findings = [
+        AnalysisFinding(
+            path="/var/lib/docker-loop.xfs",
+            dsize=2000,
+            is_dir=False,
+            analysis_kind="protected huge hotspots",
+            attention_level="keep protected",
+            review_reason="protected runtime area dominates space",
+            evidence="matched protected prefix `/var/lib` with `2.0 KB`",
+            dependency_check_confidence="high",
+            selection_source="protected_hotspot",
+            group_key="hotspot:/var/lib",
+            configured_dominant_percent=0.8,
+        )
+    ]
+
+    report = render_review_report("/", findings)
+
+    assert "# Review Report" in report
+    assert "## Protected Huge Hotspots" in report
+    assert "configured_dominant_percent" in report
+
+
+def test_render_review_report_includes_dominant_space_findings(tmp_path: Path) -> None:
     model_path = tmp_path / "model.gguf"
     model_path.write_bytes(b"x")
-    candidates = build_review_candidates(
+    findings = build_analysis_findings(
         selected_nodes=[
             NormalizedNode(path=str(model_path), name="model.gguf", is_dir=False, asize=0, dsize=2000)
         ],
@@ -196,35 +282,13 @@ def test_render_review_report_groups_candidates_by_bucket(tmp_path: Path) -> Non
         inspection_prefixes=[str(tmp_path)],
         nearby_reference_extensions=[".json"],
         max_nearby_reference_files=5,
+        dominant_percent=0.8,
+        min_candidate_bytes=1024,
     )
 
-    report = render_review_report(root_path=str(tmp_path), candidates=candidates)
+    report = render_review_report(root_path=str(tmp_path), findings=findings)
 
     assert "# Review Report" in report
-    assert "## Review Carefully" in report
+    assert "## Dominant Space" in report
     assert str(model_path) in report
-
-
-def test_render_review_report_uses_only_review_buckets(tmp_path: Path) -> None:
-    cache_path = tmp_path / ".cache" / "blob.bin"
-    cache_path.parent.mkdir()
-    cache_path.write_bytes(b"x")
-    candidates = build_review_candidates(
-        selected_nodes=[
-            NormalizedNode(path=str(cache_path), name="blob.bin", is_dir=False, asize=0, dsize=2000)
-        ],
-        all_nodes=[
-            NormalizedNode(path=str(cache_path), name="blob.bin", is_dir=False, asize=0, dsize=2000)
-        ],
-        protected_prefixes=["/etc", "/usr", "/var/lib"],
-        inspection_prefixes=[str(tmp_path)],
-        nearby_reference_extensions=[".json"],
-        max_nearby_reference_files=5,
-    )
-
-    report = render_review_report(root_path=str(tmp_path), candidates=candidates)
-
-    assert "# Review Report" in report
-    assert "review first" in report.lower()
-    assert "review_bucket" in report
 

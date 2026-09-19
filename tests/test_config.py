@@ -66,3 +66,12 @@ def test_load_settings_reads_recursive_reporting_defaults(tmp_path: Path) -> Non
     assert settings.max_nearby_reference_files == 5
     assert settings.nearby_reference_extensions == [".json", ".yaml", ".yml"]
 
+
+def test_load_settings_reads_dominant_percent_override() -> None:
+    settings = load_settings(
+        Path("config/defaults.json"),
+        env_overrides={"DOMINANT_PERCENT": "0.67"},
+    )
+
+    assert settings.dominant_percent == 0.67
+

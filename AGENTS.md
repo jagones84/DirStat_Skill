@@ -18,14 +18,14 @@ If a local `.agent/HANDOFF.md` exists in the working copy, use it as volatile op
 
 This repository is read-only.
 
-It does **not** remove files automatically.
+It does **not** change files automatically.
 It does **not** issue cleanup commands.
 It only scans, summarizes, and suggests what a human should review.
 
 If the user sounds like this, this repo is the intended path:
 
 - "I am tired of huge AI caches"
-- "Which old models can I remove?"
+- "Which old models deserve review?"
 - "What is wasting disk space?"
 - "Show me the biggest junk on C: or D:"
 - "Audit this Linux box without deleting anything"
@@ -46,13 +46,21 @@ If the user sounds like this, this repo is the intended path:
 - use `scripts/windows/` only for Windows convenience flows
 - read compact outputs before raw exports
 - read `review_report.md` before the diagnostic CSV files
-- classify findings into:
+- treat the dossier as analysis-driven:
+  - `dominant space`
+  - `path safety`
+  - `nearby references`
+  - `signature heuristics`
+  - `probable duplicates`
+  - `protected huge hotspots`
+- use attention levels:
   - `review first`
   - `review carefully`
   - `keep protected`
-- require a reason and dependency-check summary for every review candidate
+- require a reason, evidence summary, and confidence level for every finding
 - prefer partial downloads, trash, and cache as first review targets
 - do not suggest touching Docker storage, swap, or obvious system paths blindly
 - do not assume the whole machine must be scanned; prefer explicit `--path` targets
 - fail loudly on invalid engine/platform/path combinations
+- support runtime override of `--dominant-percent` when the current machine needs a wider or narrower dominant-space walk
 

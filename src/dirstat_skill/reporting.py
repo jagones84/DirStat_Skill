@@ -4,8 +4,19 @@ import csv
 from dataclasses import dataclass
 from pathlib import Path
 
-from dirstat_skill.models import NormalizedNode, ReviewCandidate
+from dirstat_skill.models import AnalysisFinding, NormalizedNode
 from dirstat_skill.risk import classify_path
+
+
+ANALYSIS_SECTIONS: list[tuple[str, str, str]] = [
+    ("Dominant Space", "dominant space", "Shows the paths that explain most space under the configured dominant-space threshold."),
+    ("Path Safety", "path safety", "Shows paths whose location changes their risk posture even before deeper inspection."),
+    ("Nearby References", "nearby references", "Shows paths with local evidence pointing to nearby configs, manifests, or workflow references."),
+    ("Signature Heuristics", "signature heuristics", "Shows paths matched by obvious signatures such as cache, temp, trash, or incomplete-download patterns."),
+    ("Probable Duplicates", "probable duplicates", "Shows large assets that look duplicated by basename, size, and extension across different directories."),
+    ("Protected Huge Hotspots", "protected huge hotspots", "Shows very large protected areas that matter for visibility but should stay handled carefully."),
+]
+LARGE_ASSET_EXTENSIONS = {".gguf", ".safetensors", ".ckpt", ".bin", ".pth", ".pt", ".onnx"}
 
 
 @dataclass(frozen=True)
@@ -60,87 +71,106 @@ def select_dominant_candidates_for_roots(
     return _dedupe_nodes(selected)
 
 
-def build_review_candidates(
+def build_analysis_findings(
     selected_nodes: list[NormalizedNode],
     all_nodes: list[NormalizedNode],
     protected_prefixes: list[str],
     inspection_prefixes: list[str],
     nearby_reference_extensions: list[str],
     max_nearby_reference_files: int,
-) -> list[ReviewCandidate]:
-    candidates: list[ReviewCandidate] = []
+    dominant_percent: float,
+    min_candidate_bytes: int,
+) -> list[AnalysisFinding]:
+    findings: list[AnalysisFinding] = []
     for node in selected_nodes:
-        review_bucket = classify_path(
-            node.path,
-            protected_prefixes,
-            inspection_prefixes,
-        )
-        nearby_refs = _find_nearby_references(
-            node.path,
-            nearby_reference_extensions=nearby_reference_extensions,
-            max_nearby_reference_files=max_nearby_reference_files,
-        )
-        review_reason = _review_reason(node=node, review_bucket=review_bucket)
-        dependency_check_summary, confidence = _dependency_summary(
-            node=node,
-            review_bucket=review_bucket,
-            nearby_refs=nearby_refs,
-        )
-        candidates.append(
-            ReviewCandidate(
-                path=node.path,
-                dsize=node.dsize,
-                is_dir=node.is_dir,
-                bucket=review_bucket,
-                review_reason=review_reason,
-                dependency_check_summary=dependency_check_summary,
-                dependency_check_confidence=confidence,
-                selection_source="dominant_subtree" if node.is_dir else "dominant_leaf",
+        findings.append(
+            _build_primary_finding(
+                node=node,
+                protected_prefixes=protected_prefixes,
+                inspection_prefixes=inspection_prefixes,
+                nearby_reference_extensions=nearby_reference_extensions,
+                max_nearby_reference_files=max_nearby_reference_files,
+                dominant_percent=dominant_percent,
             )
         )
-    return candidates
+    findings.extend(
+        _build_probable_duplicate_findings(
+            nodes=all_nodes,
+            protected_prefixes=protected_prefixes,
+            dominant_percent=dominant_percent,
+            min_candidate_bytes=min_candidate_bytes,
+        )
+    )
+    findings.extend(
+        _build_protected_hotspot_findings(
+            nodes=all_nodes,
+            protected_prefixes=protected_prefixes,
+            dominant_percent=dominant_percent,
+            min_candidate_bytes=min_candidate_bytes,
+        )
+    )
+    return _dedupe_findings(findings)
 
 
-def render_review_report(root_path: str, candidates: list[ReviewCandidate]) -> str:
-    sections = [
-        ("Review First", "review first"),
-        ("Review Carefully", "review carefully"),
-        ("Keep Protected", "keep protected"),
-    ]
+def render_review_report(root_path: str, findings: list[AnalysisFinding]) -> str:
+    configured_dominant_percent = findings[0].configured_dominant_percent if findings else 0.0
     lines = [
         "# Review Report",
         "",
         "> READ-ONLY ANALYSIS ONLY",
-        "> DirStat_Skill never removes files. It only suggests what a human should review.",
+        "> DirStat_Skill never changes files automatically. It only explains what a human should review.",
         "",
         f"- root: `{root_path}`",
-        f"- total_candidates: {len(candidates)}",
+        f"- total_findings: {len(findings)}",
+        f"- configured_dominant_percent: `{configured_dominant_percent}`",
+        "",
+        "## How To Read This",
+        "",
+        "- Start from `dominant space` to see where the volume is concentrated.",
+        "- Use `path safety` and `protected huge hotspots` to understand sensitive areas.",
+        "- Treat `probable duplicates` as a strong suspicion, not as byte-level proof.",
+        "- Treat `nearby references` as contextual evidence, not as certainty of active use.",
         "",
     ]
-    for title, action in sections:
+    for title, analysis_kind, explanation in ANALYSIS_SECTIONS:
         lines.append(f"## {title}")
         lines.append("")
-        section_candidates = [item for item in candidates if item.bucket == action]
-        if not section_candidates:
+        lines.append(explanation)
+        lines.append("")
+        section_findings = [item for item in findings if item.analysis_kind == analysis_kind]
+        if not section_findings:
             lines.append("- none")
             lines.append("")
             continue
-        for candidate in section_candidates:
-            lines.append(f"### `{candidate.path}`")
+        for finding in section_findings:
+            lines.append(f"### `{finding.path}`")
             lines.append("")
-            lines.append(f"- size_bytes: `{candidate.dsize}`")
-            lines.append(f"- size_human: `{_human_size(candidate.dsize)}`")
-            lines.append(f"- review_reason: {candidate.review_reason}")
-            lines.append(f"- dependency_check: {candidate.dependency_check_summary}")
-            lines.append(f"- confidence: `{candidate.dependency_check_confidence}`")
-            lines.append(f"- review_bucket: `{candidate.bucket}`")
+            lines.append(f"- size_bytes: `{finding.dsize}`")
+            lines.append(f"- size_human: `{_human_size(finding.dsize)}`")
+            lines.append(f"- attention_level: `{finding.attention_level}`")
+            lines.append(f"- review_reason: {finding.review_reason}")
+            lines.append(f"- evidence: {finding.evidence}")
+            lines.append(f"- confidence: `{finding.dependency_check_confidence}`")
+            if finding.group_key:
+                lines.append(f"- group_key: `{finding.group_key}`")
+            lines.append(f"- selection_source: `{finding.selection_source}`")
             lines.append("")
+    lines.extend(
+        [
+            "## Limits",
+            "",
+            "- `probable duplicates` uses fast structural signals by default, not full-content hashing.",
+            "- `protected huge hotspots` are visibility findings, not an invitation to act blindly.",
+            "- low-confidence findings still need human judgment.",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
 def write_review_candidates_csv(
     output_path: Path,
-    candidates: list[ReviewCandidate],
+    findings: list[AnalysisFinding],
 ) -> None:
     with output_path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
@@ -149,16 +179,19 @@ def write_review_candidates_csv(
                 "path",
                 "dsize",
                 "is_dir",
-                "bucket",
+                "analysis_kind",
+                "attention_level",
                 "review_reason",
-                "dependency_check_summary",
+                "evidence",
                 "dependency_check_confidence",
                 "selection_source",
+                "group_key",
+                "configured_dominant_percent",
             ],
         )
         writer.writeheader()
-        for candidate in candidates:
-            writer.writerow(candidate.__dict__)
+        for finding in findings:
+            writer.writerow(finding.__dict__)
 
 
 def _build_children_index(nodes: list[NormalizedNode]) -> dict[str | None, list[NormalizedNode]]:
@@ -219,36 +252,174 @@ def _select_from_node(
     return selected or [node]
 
 
-def _review_reason(node: NormalizedNode, review_bucket: str) -> str:
+def _build_primary_finding(
+    node: NormalizedNode,
+    protected_prefixes: list[str],
+    inspection_prefixes: list[str],
+    nearby_reference_extensions: list[str],
+    max_nearby_reference_files: int,
+    dominant_percent: float,
+) -> AnalysisFinding:
+    attention_level = classify_path(
+        node.path,
+        protected_prefixes,
+        inspection_prefixes,
+    )
+    nearby_refs = _find_nearby_references(
+        node.path,
+        nearby_reference_extensions=nearby_reference_extensions,
+        max_nearby_reference_files=max_nearby_reference_files,
+    )
+    analysis_kind = _primary_analysis_kind(
+        path=node.path,
+        attention_level=attention_level,
+        nearby_refs=nearby_refs,
+    )
+    review_reason = _review_reason(node=node, attention_level=attention_level, analysis_kind=analysis_kind)
+    evidence, confidence = _evidence_and_confidence(
+        node=node,
+        attention_level=attention_level,
+        nearby_refs=nearby_refs,
+    )
+    return AnalysisFinding(
+        path=node.path,
+        dsize=node.dsize,
+        is_dir=node.is_dir,
+        analysis_kind=analysis_kind,
+        attention_level=attention_level,
+        review_reason=review_reason,
+        evidence=evidence,
+        dependency_check_confidence=confidence,
+        selection_source="dominant_subtree" if node.is_dir else "dominant_leaf",
+        group_key="",
+        configured_dominant_percent=dominant_percent,
+    )
+
+
+def _build_probable_duplicate_findings(
+    nodes: list[NormalizedNode],
+    protected_prefixes: list[str],
+    dominant_percent: float,
+    min_candidate_bytes: int,
+) -> list[AnalysisFinding]:
+    groups: dict[tuple[str, int, str], list[NormalizedNode]] = {}
+    for node in nodes:
+        if node.is_dir or node.dsize < min_candidate_bytes:
+            continue
+        suffix = Path(node.name).suffix.lower()
+        if suffix not in LARGE_ASSET_EXTENSIONS:
+            continue
+        if _matched_protected_prefix(node.path, protected_prefixes):
+            continue
+        groups.setdefault((node.name.lower(), node.dsize, suffix), []).append(node)
+
+    findings: list[AnalysisFinding] = []
+    for (name, dsize, _suffix), group in groups.items():
+        directories = {str(Path(node.path).parent).lower() for node in group}
+        if len(group) < 2 or len(directories) < 2:
+            continue
+        group_key = f"duplicate:{name}:{dsize}"
+        evidence = f"same basename and same size across {len(group)} directories"
+        for node in sorted(group, key=lambda item: item.path.lower()):
+            findings.append(
+                AnalysisFinding(
+                    path=node.path,
+                    dsize=node.dsize,
+                    is_dir=node.is_dir,
+                    analysis_kind="probable duplicates",
+                    attention_level="review carefully",
+                    review_reason="large asset appears structurally duplicated across different directories",
+                    evidence=evidence,
+                    dependency_check_confidence="medium",
+                    selection_source="duplicate_cluster",
+                    group_key=group_key,
+                    configured_dominant_percent=dominant_percent,
+                )
+            )
+    return findings
+
+
+def _build_protected_hotspot_findings(
+    nodes: list[NormalizedNode],
+    protected_prefixes: list[str],
+    dominant_percent: float,
+    min_candidate_bytes: int,
+) -> list[AnalysisFinding]:
+    protected_nodes = [
+        node
+        for node in nodes
+        if node.dsize >= min_candidate_bytes and _matched_protected_prefix(node.path, protected_prefixes)
+    ]
+    findings: list[AnalysisFinding] = []
+    for node in sorted(protected_nodes, key=lambda item: item.dsize, reverse=True)[:10]:
+        matched_prefix = _matched_protected_prefix(node.path, protected_prefixes) or "protected"
+        findings.append(
+            AnalysisFinding(
+                path=node.path,
+                dsize=node.dsize,
+                is_dir=node.is_dir,
+                analysis_kind="protected huge hotspots",
+                attention_level="keep protected",
+                review_reason="protected runtime-owned area contributes significant space and should be understood explicitly",
+                evidence=f"matched protected prefix `{matched_prefix}` with `{_human_size(node.dsize)}`",
+                dependency_check_confidence="high",
+                selection_source="protected_hotspot",
+                group_key=f"hotspot:{matched_prefix}",
+                configured_dominant_percent=dominant_percent,
+            )
+        )
+    return findings
+
+
+def _review_reason(node: NormalizedNode, attention_level: str, analysis_kind: str) -> str:
     normalized = _path_key(node.path)
     if normalized.endswith((".filepart", ".part", ".partial")):
-        return "partial download signature surfaced by the recursive 80/20 walk"
+        return "incomplete download pattern surfaced by the dominant-space walk"
     if any(fragment in normalized for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")):
-        return "cache, temp, or trash path surfaced by the recursive 80/20 walk"
-    if review_bucket == "keep protected":
-        return "protected system or runtime-owned path that should stay untouched"
+        return "cache, temp, or trash path surfaced by the dominant-space walk"
+    if analysis_kind == "nearby references":
+        return "path surfaced with nearby contextual references worth reading before drawing conclusions"
+    if attention_level == "keep protected":
+        return "protected system or runtime-owned path that should be interpreted carefully"
     if normalized.endswith((".gguf", ".safetensors", ".ckpt", ".bin", ".pth")):
-        return "user-owned model asset surfaced by the recursive 80/20 walk"
+        return "user-owned model asset surfaced by the dominant-space walk"
     if node.is_dir:
-        return "directory dominates parent space under the recursive 80/20 walk"
-    return "file surfaced by the recursive 80/20 walk"
+        return "directory dominates parent space under the dominant-space walk"
+    return "file surfaced by the dominant-space walk"
 
 
-def _dependency_summary(
+def _primary_analysis_kind(
+    path: str,
+    attention_level: str,
+    nearby_refs: list[str],
+) -> str:
+    normalized = _path_key(path)
+    if _is_signature_path(normalized):
+        return "signature heuristics"
+    if nearby_refs:
+        return "nearby references"
+    if attention_level == "keep protected":
+        return "path safety"
+    return "dominant space"
+
+
+def _evidence_and_confidence(
     node: NormalizedNode,
-    review_bucket: str,
+    attention_level: str,
     nearby_refs: list[str],
 ) -> tuple[str, str]:
     normalized = _path_key(node.path)
-    if review_bucket == "keep protected":
-        return "protected path matched system/runtime policy prefixes", "high"
+    if attention_level == "keep protected":
+        return "matched protected path prefix", "high"
     if any(fragment in normalized for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")):
-        return "matched cache/temp/trash signature; review is low-risk and no nearby manifests were found", "high"
+        return "matched cache or temp path signature", "high"
     if normalized.endswith((".filepart", ".part", ".partial")):
-        return "matched partial-download signature; human can usually remove it after a quick sanity check", "high"
+        return "matched partial-download suffix", "high"
     if nearby_refs:
         return f"nearby references found in {', '.join(nearby_refs)}", "medium"
-    return "no nearby references found in candidate directory or checked ancestors", "low"
+    if Path(node.name).suffix.lower() in LARGE_ASSET_EXTENSIONS:
+        return "selected by dominant-space walk among large user-owned assets", "low"
+    return "selected by dominant-space walk with no nearby references found", "low"
 
 
 def _find_nearby_references(
@@ -291,6 +462,22 @@ def _find_nearby_references(
     return matches
 
 
+def _is_signature_path(normalized: str) -> bool:
+    return normalized.endswith((".filepart", ".part", ".partial", ".tmp", ".cache")) or any(
+        fragment in normalized
+        for fragment in ("/.cache", "/trash", "/.trash", "/appdata/local/temp", "/tmp", "/var/tmp")
+    )
+
+
+def _matched_protected_prefix(path: str, protected_prefixes: list[str]) -> str | None:
+    normalized_path = _path_key(path)
+    for prefix in protected_prefixes:
+        normalized_prefix = _path_key(prefix)
+        if normalized_path == normalized_prefix or normalized_path.startswith(f"{normalized_prefix}/"):
+            return prefix
+    return None
+
+
 def _path_key(path: str) -> str:
     normalized = path.replace("\\", "/").rstrip("/").lower()
     if not normalized and path.startswith("/"):
@@ -323,6 +510,18 @@ def _dedupe_nodes(nodes: list[NormalizedNode]) -> list[NormalizedNode]:
             continue
         seen.add(key)
         deduped.append(node)
+    return deduped
+
+
+def _dedupe_findings(findings: list[AnalysisFinding]) -> list[AnalysisFinding]:
+    deduped: list[AnalysisFinding] = []
+    seen: set[tuple[str, str, str]] = set()
+    for finding in findings:
+        key = (finding.analysis_kind, _path_key(finding.path), finding.group_key)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(finding)
     return deduped
 
 

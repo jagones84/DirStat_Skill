@@ -1,33 +1,40 @@
 ---
 name: "DirStat_Skill"
-description: "Use when auditing disk usage on Windows or Linux and suggesting what a human should review to reclaim space without deleting anything automatically, especially for caches, model files, trash, and partial downloads."
+description: "Use when auditing disk usage on Windows or Linux and suggesting what a human should review to reclaim space without changing files automatically, especially for caches, model files, trash, and partial downloads."
 ---
 
 # DirStat_Skill
 
 > READ-ONLY ANALYSIS ONLY
 >
-> This skill never removes files, never schedules cleanup, and never performs cleanup actions.
+> This skill never changes files automatically, never schedules cleanup, and never performs cleanup actions.
 > It only scans disk usage, emits compact reports, and suggests what a human should review.
 
 ## Overview
 
 This skill turns the repository into an agent-ready workflow for read-only space recovery triage.
 
-It audits disk usage, reads compact reports, and produces three review buckets:
+It audits disk usage, reads compact reports, and produces an analysis dossier with six analysis types:
+
+- `dominant space`
+- `path safety`
+- `nearby references`
+- `signature heuristics`
+- `probable duplicates`
+- `protected huge hotspots`
+
+Attention levels remain compact:
 
 - `review first`
 - `review carefully`
 - `keep protected`
-
-The reporting flow emits a recursive review dossier instead of a flat top list.
 
 ## When to Use
 
 Use this skill when:
 
 - the user asks what is consuming disk space
-- the user asks what can be reviewed to free disk space
+- the user asks what deserves review to free disk space
 - the machine has large caches, model files, partial downloads, or trash
 - the user wants a safe shortlist, not blind cleanup
 - the environment is Windows or Linux and the repo tools are available
@@ -40,13 +47,15 @@ Do not use this skill when:
 
 ## Safety Rules
 
-- Never remove files automatically.
+- Never change files automatically.
 - Never emit cleanup commands.
 - Suggest human review only.
 - Read compact outputs before raw exports.
 - Treat partial downloads, trash, and cache as `review first`.
 - Treat model assets, checkpoints, and live app inputs as `review carefully`.
 - Treat Docker storage, swap, and system-owned paths as `keep protected`.
+- Treat `probable duplicates` as suspicion, not proof.
+- Treat `protected huge hotspots` as visibility findings, not action cues.
 - If `ncdu` is missing on Linux and installation needs `sudo`, use the repo install path only; do not invent alternate flows.
 - Never store credentials or passwords in the repository.
 
@@ -90,6 +99,12 @@ Run:
 python -m dirstat_skill.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json
 ```
 
+Override the dominant-space threshold when needed:
+
+```bash
+python -m dirstat_skill.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json --dominant-percent 0.67
+```
+
 Expected:
 
 - a new run folder or explicit output folder
@@ -114,6 +129,12 @@ Run:
 
 ```bash
 python3 -m dirstat_skill.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json
+```
+
+Override the dominant-space threshold when needed:
+
+```bash
+python3 -m dirstat_skill.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json --dominant-percent 0.72
 ```
 
 Expected:
@@ -169,23 +190,18 @@ Read in this order:
 
 Do **not** start from the raw export unless the compact reports are missing or clearly wrong.
 
-### 7. Pull The Safe-ish Review Layer
-
-Run:
-
-```bash
-bash scripts/linux/find_safe_candidates.sh
-```
-
-This helper focuses on the highest-confidence review classes:
-
-- large cache files
-- partial downloads like `*.filepart`
-- trash content
-
 ### 8. Classify Findings
 
-Use these buckets:
+Use the dossier analyses first:
+
+- `dominant space`
+- `path safety`
+- `nearby references`
+- `signature heuristics`
+- `probable duplicates`
+- `protected huge hotspots`
+
+Then use the attention levels:
 
 - `review first`
   - incomplete downloads
@@ -200,12 +216,12 @@ Use these buckets:
   - `/etc`, `/usr`, `/boot`, `/var/lib`
   - anything clearly part of runtime/system storage
 
-### 9.1 Recursive 80/20 Walk
+### 9.1 Dominant-Space Walk
 
 The selector should:
 
 - start from the heaviest roots or macrofolders
-- keep the children that explain about `80%` of each dominant branch
+- keep the children that explain about the configured dominant threshold of each dominant branch
 - recurse into dominant subtrees
 - emit all concrete candidates found in those dominant subtrees, even when many medium files matter together
 
@@ -218,7 +234,9 @@ Return a human-review suggestion list grouped by:
 - path
 - size
 - reason
-- risk bucket
+- analysis type
+- attention level
+- evidence
 
 Preferred output order:
 
@@ -238,10 +256,10 @@ The final answer should always contain:
 
 - a short status line with whether the audit actually ran
 - the latest run path
-- the safest candidates first
-- anything large that should *not* be deleted blindly
+- the most actionable findings first
+- anything large that should *not* be touched blindly
 - the main reason for each recommendation
-- a dependency-check summary for each emitted candidate
+- an evidence summary for each emitted finding
 
 ## Common Mistakes
 

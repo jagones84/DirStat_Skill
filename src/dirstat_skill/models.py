@@ -32,12 +32,15 @@ class RawExportMetadata:
 
 
 @dataclass(frozen=True)
-class ReviewCandidate:
+class AnalysisFinding:
     path: str
     dsize: int
     is_dir: bool
-    bucket: str
+    analysis_kind: str
+    attention_level: str
     review_reason: str
-    dependency_check_summary: str
+    evidence: str
     dependency_check_confidence: str
     selection_source: str
+    group_key: str
+    configured_dominant_percent: float

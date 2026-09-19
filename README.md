@@ -2,7 +2,7 @@
 
 > READ-ONLY ANALYSIS ONLY
 >
-> `DirStat_Skill` never removes files, never schedules cleanup, and never performs destructive actions.
+> `DirStat_Skill` never changes files automatically, never schedules cleanup, and never performs destructive actions.
 > It only scans disk usage, builds compact reports, and suggests what a human should review.
 
 Tired of wasting tens of GB on forgotten AI models, bloated caches, and files you have not touched since the Cold War? This is the safe read-only answer.
@@ -16,9 +16,9 @@ It helps humans and agents:
 - scan explicit paths on Windows or Linux
 - keep raw scan data on disk instead of dumping it into an LLM
 - generate compact summaries first
-- follow dominant branches recursively with an 80/20 walk
-- group findings into `review first`, `review carefully`, and `keep protected`
-- produce a review dossier with reasons and dependency-check notes
+- follow dominant branches recursively with a configurable dominant-space walk
+- present findings as explicit analysis types plus attention levels
+- produce a review dossier with reasons, evidence, and confidence notes
 
 ## Identity
 
@@ -56,7 +56,7 @@ This is intentional. The skill is supposed to be idiot-proof, not permissive.
 - raw exports stay on disk
 - the first pass reads `review_report.md`, `review_candidates.csv`, `summary.md`, and `candidates.json`
 - reviews start from dominant branches, not from a flat global top list
-- drill-down happens path by path with a recursive 80/20 walk
+- drill-down happens path by path with a configurable dominant-space walk
 - agents read raw exports only when compact outputs are missing or inconsistent
 
 ## Output Contract
@@ -71,6 +71,20 @@ Every audit run writes a bundle under `outputs/<stamp>_audit/`:
 - `review_candidates.csv`
 - `review_report.md`
 - `run.log`
+
+## Runtime Overrides
+
+The dominant-space selector is configurable:
+
+- default: `dominant_percent = 0.8` from `config/defaults.json`
+- runtime override:
+
+```bash
+python -m dirstat_skill.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json --dominant-percent 0.67
+python3 -m dirstat_skill.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json --dominant-percent 0.72
+```
+
+Use the default for normal runs. Override it only when an agent or operator needs a wider or narrower dominant-space walk for the current machine.
 
 ## Installation
 
@@ -117,35 +131,57 @@ bash scripts/linux/run_audit.sh /home
 powershell -ExecutionPolicy Bypass -File scripts/windows/run_audit.ps1 -TargetPath C:\ -OutputDir outputs\win_c_audit
 ```
 
-## Review Buckets
+## Analysis Types
+
+- `dominant space`
+  - paths that explain most space under the current dominant threshold
+- `path safety`
+  - paths whose location changes how cautiously they must be interpreted
+- `nearby references`
+  - paths with nearby manifests, configs, or local evidence worth reading
+- `signature heuristics`
+  - cache, temp, trash, and incomplete-download patterns
+- `probable duplicates`
+  - same basename + same size + same extension across different directories
+- `protected huge hotspots`
+  - very large protected areas that must stay visible in the dossier
+
+Attention levels still stay compact:
 
 - `review first`
-  - partial downloads
-  - trash content
-  - cache and temp blobs
 - `review carefully`
-  - user-owned models
-  - checkpoints, `.safetensors`, `.gguf`
-  - large application inputs
 - `keep protected`
-  - system-owned paths
-  - package stores
-  - swap, Docker backing storage, OS directories
 
 ## Review Dossier
 
 - `review_report.md`
   - human-readable dossier
-  - grouped by `review first`, `review carefully`, `keep protected`
-  - includes full paths, reasons, and dependency-check summaries
+  - grouped by analysis type
+  - includes full paths, reasons, evidence, confidence, and attention levels
 - `review_candidates.csv`
   - structured flat export for spreadsheets and scripts
 - `candidates.json`
   - machine-readable version for agent workflows
 
-The selector follows a recursive 80/20 rule:
+### How To Read Results
 
-- find the children that explain about `80%` of each dominant branch
+Read in this order:
+
+1. `review_report.md`
+2. `review_candidates.csv`
+3. `summary.md`
+4. `candidates.json`
+
+Interpretation rules:
+
+- start with `dominant space`
+- use `probable duplicates` as a strong suspicion, not as byte-level proof
+- use `protected huge hotspots` for visibility, not for blind action
+- treat low-confidence findings as prompts for human judgment, not as conclusions
+
+The selector follows a recursive dominant-space rule:
+
+- find the children that explain about the configured dominant threshold of each branch
 - keep descending while the branch stays dominant
 - emit all relevant candidates from that walk, including many medium-size files when they dominate together
 
@@ -158,7 +194,7 @@ Dependency checks are cheap and local by default:
 ## Safety Rules
 
 - never store secrets in the repository
-- never remove files automatically
+- never change files automatically
 - never issue cleanup commands from this skill
 - prefer compact outputs over raw dumps
 - stop loudly if the requested engine or runtime contract is wrong

@@ -31,7 +31,7 @@ def load_settings(
     return Settings(
         top_n=int(overrides.get("TOP_N", payload["top_n"])),
         min_bytes=int(overrides.get("MIN_BYTES", payload["min_bytes"])),
-        dominant_percent=float(payload.get("dominant_percent", 0.8)),
+        dominant_percent=float(overrides.get("DOMINANT_PERCENT", payload.get("dominant_percent", 0.8))),
         min_candidate_bytes=int(payload.get("min_candidate_bytes", payload["min_bytes"])),
         one_file_system=bool(payload["one_file_system"]),
         exclude_patterns=list(payload["exclude_patterns"]),

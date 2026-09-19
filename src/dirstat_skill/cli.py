@@ -12,8 +12,8 @@ from dirstat_skill.engine_ncdu import build_ncdu_export_command, detect_ncdu
 from dirstat_skill.engine_windows import build_windows_export_for_targets
 from dirstat_skill.logging_utils import configure_run_logger
 from dirstat_skill.reporting import (
+    build_analysis_findings,
     build_top_lists,
-    build_review_candidates,
     render_review_report,
     select_dominant_candidates_for_roots,
     write_review_candidates_csv,
@@ -36,12 +36,14 @@ def main(argv: list[str] | None = None) -> int:
     summarize.add_argument("--export", required=True)
     summarize.add_argument("--output-dir", required=True)
     summarize.add_argument("--config", required=True)
+    summarize.add_argument("--dominant-percent", type=float, default=None)
 
     audit = subparsers.add_parser("audit")
     audit.add_argument("--path", action="append", dest="paths", required=True)
     audit.add_argument("--output-dir", required=True)
     audit.add_argument("--engine", default=None)
     audit.add_argument("--config", default="config/defaults.json")
+    audit.add_argument("--dominant-percent", type=float, default=None)
 
     args = parser.parse_args(argv)
     if args.command == "scan":
@@ -56,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
             export_path=Path(args.export),
             output_dir=Path(args.output_dir),
             config_path=Path(args.config),
+            dominant_percent_override=args.dominant_percent,
         )
     if args.command == "audit":
         return _audit(
@@ -63,12 +66,21 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=Path(args.output_dir),
             config_path=Path(args.config),
             requested_engine=args.engine,
+            dominant_percent_override=args.dominant_percent,
         )
     return 2
 
 
-def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) -> int:
-    settings = load_settings(config_path=config_path)
+def _summarize_export(
+    export_path: Path,
+    output_dir: Path,
+    config_path: Path,
+    dominant_percent_override: float | None = None,
+) -> int:
+    env_overrides = {}
+    if dominant_percent_override is not None:
+        env_overrides["DOMINANT_PERCENT"] = str(dominant_percent_override)
+    settings = load_settings(config_path=config_path, env_overrides=env_overrides or None)
     parsed = parse_export(export_path)
     top_lists = build_top_lists(
         parsed.nodes,
@@ -82,7 +94,7 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
         dominant_percent=settings.dominant_percent,
         min_candidate_bytes=settings.min_candidate_bytes,
     )
-    candidates = build_review_candidates(
+    findings = build_analysis_findings(
         selected_nodes=selected_nodes,
         all_nodes=parsed.nodes,
         protected_prefixes=settings.risk_do_not_touch_prefixes
@@ -90,6 +102,8 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
         inspection_prefixes=settings.risk_needs_inspection_prefixes,
         nearby_reference_extensions=settings.nearby_reference_extensions,
         max_nearby_reference_files=settings.max_nearby_reference_files,
+        dominant_percent=settings.dominant_percent,
+        min_candidate_bytes=settings.min_candidate_bytes,
     )
 
     (output_dir / "summary.md").write_text(
@@ -113,12 +127,12 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
             writer.writerow({"path": node.path, "dsize": node.dsize})
 
     (output_dir / "candidates.json").write_text(
-        json.dumps([candidate.__dict__ for candidate in candidates], indent=2),
+        json.dumps([finding.__dict__ for finding in findings], indent=2),
         encoding="utf-8",
     )
-    write_review_candidates_csv(output_dir / "review_candidates.csv", candidates)
+    write_review_candidates_csv(output_dir / "review_candidates.csv", findings)
     (output_dir / "review_report.md").write_text(
-        render_review_report(parsed.root_path, candidates),
+        render_review_report(parsed.root_path, findings),
         encoding="utf-8",
     )
     return 0
@@ -175,6 +189,7 @@ def _audit(
     output_dir: Path,
     config_path: Path,
     requested_engine: str | None,
+    dominant_percent_override: float | None = None,
 ) -> int:
     scan_exit_code = _scan(
         paths=paths,
@@ -191,6 +206,7 @@ def _audit(
         export_path=output_dir / export_name,
         output_dir=output_dir,
         config_path=config_path,
+        dominant_percent_override=dominant_percent_override,
     )
 
 
