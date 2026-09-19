@@ -12,7 +12,7 @@ from safe_delete_advisor.risk import classify_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="safe-delete-advisor")
+    parser = argparse.ArgumentParser(prog="safe-delete-advisor-skill")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     summarize = subparsers.add_parser("summarize-export")

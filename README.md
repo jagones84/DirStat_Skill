@@ -1,4 +1,4 @@
-# safe-delete-advisor
+# safe-delete-advisor-skill
 
 Tired of wasting tens of GB on forgotten AI models, bloated caches, and files you have not touched since the Cold War? Here is the safe, read-only answer.
 
@@ -17,11 +17,12 @@ Version `v1` targets DGX/Linux ARM and uses `ncdu` as the initial scan engine.
 
 This repository is also packaged as an agent skill.
 
-- skill name: `safe-delete-advisor`
-- skill path: `.trae/skills/safe-delete-advisor/SKILL.md`
+- skill name: `safe-delete-advisor-skill`
+- skill path: `.trae/skills/safe-delete-advisor-skill/SKILL.md`
 - agent entrypoint: `AGENTS.md`
 
-The repository, package, and skill now use the same public-facing name: `safe-delete-advisor`.
+The public repository and skill identity use `safe-delete-advisor-skill`.
+The Python import package stays `safe_delete_advisor` for runtime stability.
 
 ## Non-Goals
 
@@ -83,6 +84,7 @@ The repository is explicitly designed to avoid wasting tokens:
 - the AI reads summaries first, not raw dumps
 - drill-down is performed one subtree at a time
 - reports are limited by top `N`, thresholds, and risk buckets
+- the default review path starts from `summary.md`, `top_dirs.csv`, `top_files.csv`, and `candidates.json`, not the raw `ncdu-export.json`
 
 ## Security
 
@@ -92,12 +94,12 @@ The repository is explicitly designed to avoid wasting tokens:
 
 ## Commands
 
-- prepare Linux scripts on DGX: `ssh dgx bash /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/prepare_linux_scripts.sh`
-- verify `ncdu`: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/verify_ncdu.sh`
-- guarded install attempt: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/install_ncdu.sh`
-- live audit run: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/run_audit.sh`
-- show latest audit outputs: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/show_latest_audit.sh`
-- find safer deletion candidates: `ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/find_safe_candidates.sh`
+- prepare Linux scripts on DGX: `ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/prepare_linux_scripts.sh`
+- verify `ncdu`: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/verify_ncdu.sh`
+- guarded install attempt: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/install_ncdu.sh`
+- live audit run: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/run_audit.sh`
+- show latest audit outputs: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/show_latest_audit.sh`
+- find safer deletion candidates: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/find_safe_candidates.sh`
 
 ## Status
 
@@ -108,6 +110,6 @@ The repository is explicitly designed to avoid wasting tokens:
 - DGX verify completed: `ncdu` installed and detected
 - live audit run completed successfully
 - post-rename DGX verification completed successfully
-- latest verified run: `/home/jagones/Repositories/safe-delete-advisor/outputs/20260919_1321_audit`
+- latest verified run on the public skill path: `/home/jagones/Repositories/safe-delete-advisor-skill/outputs/20260919_1404_audit`
 - safe-candidate helper identifies large cache, partial-download, and trash files
 - skill packaging added for agent reuse

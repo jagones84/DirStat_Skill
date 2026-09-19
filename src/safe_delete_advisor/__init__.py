@@ -1,1 +1,1 @@
-"""safe-delete-advisor package."""
+"""safe-delete-advisor-skill package metadata."""

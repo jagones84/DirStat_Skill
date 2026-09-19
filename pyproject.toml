@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "safe-delete-advisor"
+name = "safe-delete-advisor-skill"
 version = "0.1.0"
 description = "Suggest what to delete safely to reclaim disk space on DGX/Linux hosts"
 requires-python = ">=3.12"

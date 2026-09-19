@@ -4,7 +4,7 @@
 
 For disk-space triage and safe deletion suggestions, load:
 
-- `.trae/skills/safe-delete-advisor/SKILL.md`
+- `.trae/skills/safe-delete-advisor-skill/SKILL.md`
 
 ## Start Here
 

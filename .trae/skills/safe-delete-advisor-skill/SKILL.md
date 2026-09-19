@@ -1,9 +1,9 @@
 ---
-name: "safe-delete-advisor"
+name: "safe-delete-advisor-skill"
 description: "Use when auditing disk usage and suggesting what can be deleted safely without deleting anything automatically, especially on DGX/Linux hosts with large caches, model files, trash, or partial downloads."
 ---
 
-# Safe Delete Advisor
+# Safe Delete Advisor Skill
 
 ## Overview
 
@@ -76,7 +76,7 @@ If the repo already contains recent audit results or blockers, continue from the
 Run:
 
 ```bash
-ssh dgx bash /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/prepare_linux_scripts.sh
+ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/prepare_linux_scripts.sh
 ```
 
 Expected:
@@ -88,7 +88,7 @@ Expected:
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/verify_ncdu.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/verify_ncdu.sh
 ```
 
 Expected:
@@ -99,7 +99,7 @@ Expected:
 If missing, use:
 
 ```bash
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/install_ncdu.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/install_ncdu.sh
 ```
 
 If this path still requires operator privileges, stop and ask for them. Do not invent package-manager shortcuts outside repo workflow.
@@ -109,7 +109,7 @@ If this path still requires operator privileges, stop and ask for them. Do not i
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/run_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/run_audit.sh
 ```
 
 Expected:
@@ -123,7 +123,7 @@ Expected:
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/show_latest_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/show_latest_audit.sh
 ```
 
 Read in this order:
@@ -140,7 +140,7 @@ Do **not** start from the raw export unless the compact reports are missing or c
 Run:
 
 ```bash
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/find_safe_candidates.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/find_safe_candidates.sh
 ```
 
 This helper focuses on the highest-confidence deletion classes:
@@ -204,13 +204,14 @@ The final answer should always contain:
 ## Quick Reference
 
 ```bash
-ssh dgx bash /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/prepare_linux_scripts.sh
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/verify_ncdu.sh
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/run_audit.sh
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/show_latest_audit.sh
-ssh dgx /home/jagones/Repositories/safe-delete-advisor/scripts/dgx/find_safe_candidates.sh
+ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/prepare_linux_scripts.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/verify_ncdu.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/run_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/show_latest_audit.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/find_safe_candidates.sh
 ```
 
 ## Current Naming
 
-The repository, package, and public skill identity are all `safe-delete-advisor`.
+The public repository and skill identity are `safe-delete-advisor-skill`.
+The Python import package remains `safe_delete_advisor`.

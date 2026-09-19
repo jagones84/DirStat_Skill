@@ -1,4 +1,4 @@
-# safe-delete-advisor v1 Implementation Plan
+# safe-delete-advisor-skill v1 Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -12,65 +12,65 @@
 
 ## File Structure
 
-- `Z:\Repositories\safe-delete-advisor\pyproject.toml`
+- `Z:\Repositories\safe-delete-advisor-skill\pyproject.toml`
   - Python project metadata and `pytest` config
-- `Z:\Repositories\safe-delete-advisor\config\defaults.json`
+- `Z:\Repositories\safe-delete-advisor-skill\config\defaults.json`
   - default thresholds, exclude rules, and risk lists
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\__init__.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\__init__.py`
   - package marker
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\config.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\config.py`
   - config dataclasses and loader
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\models.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\models.py`
   - normalized node/report dataclasses
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\engine_ncdu.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_ncdu.py`
   - engine detection and command creation
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\ncdu_json.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\ncdu_json.py`
   - parser for `ncdu -o` JSON exports
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\risk.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\risk.py`
   - risk bucket assignment
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\reporting.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\reporting.py`
   - summary generation and output writers
-- `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\cli.py`
+- `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\cli.py`
   - CLI entry point
-- `Z:\Repositories\safe-delete-advisor\scripts\dgx\verify_ncdu.sh`
+- `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\verify_ncdu.sh`
   - fail-fast verification of `ncdu` presence on DGX
-- `Z:\Repositories\safe-delete-advisor\scripts\dgx\install_ncdu.sh`
+- `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\install_ncdu.sh`
   - guarded installer that stops if unattended sudo is unavailable
-- `Z:\Repositories\safe-delete-advisor\scripts\dgx\run_audit.sh`
+- `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\run_audit.sh`
   - live read-only export launcher
-- `Z:\Repositories\safe-delete-advisor\tests\fixtures\ncdu_minimal_export.json`
+- `Z:\Repositories\safe-delete-advisor-skill\tests\fixtures\ncdu_minimal_export.json`
   - fixed sample export for parser tests
-- `Z:\Repositories\safe-delete-advisor\tests\test_config.py`
+- `Z:\Repositories\safe-delete-advisor-skill\tests\test_config.py`
   - config loader tests
-- `Z:\Repositories\safe-delete-advisor\tests\test_engine_ncdu.py`
+- `Z:\Repositories\safe-delete-advisor-skill\tests\test_engine_ncdu.py`
   - engine command builder tests
-- `Z:\Repositories\safe-delete-advisor\tests\test_ncdu_json.py`
+- `Z:\Repositories\safe-delete-advisor-skill\tests\test_ncdu_json.py`
   - parser tests
-- `Z:\Repositories\safe-delete-advisor\tests\test_risk.py`
+- `Z:\Repositories\safe-delete-advisor-skill\tests\test_risk.py`
   - risk bucket tests
-- `Z:\Repositories\safe-delete-advisor\tests\test_reporting.py`
+- `Z:\Repositories\safe-delete-advisor-skill\tests\test_reporting.py`
   - summary/report generation tests
-- `Z:\Repositories\safe-delete-advisor\tests\test_cli.py`
+- `Z:\Repositories\safe-delete-advisor-skill\tests\test_cli.py`
   - CLI smoke tests
-- `Z:\Repositories\safe-delete-advisor\outputs\.gitkeep`
+- `Z:\Repositories\safe-delete-advisor-skill\outputs\.gitkeep`
   - keep tracked empty output root
-- `Z:\Repositories\safe-delete-advisor\trash\.gitkeep`
+- `Z:\Repositories\safe-delete-advisor-skill\trash\.gitkeep`
   - keep tracked empty scratch root
-- `Z:\Repositories\safe-delete-advisor\.agent\HANDOFF.md`
+- `Z:\Repositories\safe-delete-advisor-skill\.agent\HANDOFF.md`
   - update status and blockers after live verification
-- `Z:\Repositories\safe-delete-advisor\README.md`
+- `Z:\Repositories\safe-delete-advisor-skill\README.md`
   - update with real usage commands after implementation
 
 ### Task 1: Bootstrap Python Project
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor\pyproject.toml`
-- Create: `Z:\Repositories\safe-delete-advisor\config\defaults.json`
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\__init__.py`
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\config.py`
-- Create: `Z:\Repositories\safe-delete-advisor\tests\test_config.py`
-- Create: `Z:\Repositories\safe-delete-advisor\outputs\.gitkeep`
-- Create: `Z:\Repositories\safe-delete-advisor\trash\.gitkeep`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\pyproject.toml`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\config\defaults.json`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\__init__.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\config.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_config.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\outputs\.gitkeep`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\trash\.gitkeep`
 
 - [ ] **Step 1: Write the failing config test**
 
@@ -120,7 +120,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "safe-delete-advisor"
+name = "safe-delete-advisor-skill"
 version = "0.1.0"
 description = "Read-only disk audit pipeline for DGX/Linux hosts"
 requires-python = ">=3.12"
@@ -206,10 +206,10 @@ git commit -m "feat: bootstrap python project and config loader"
 ### Task 2: Add `ncdu` Engine Detection And Command Building
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\models.py`
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\engine_ncdu.py`
-- Create: `Z:\Repositories\safe-delete-advisor\tests\test_engine_ncdu.py`
-- Create: `Z:\Repositories\safe-delete-advisor\scripts\dgx\verify_ncdu.sh`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\models.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\engine_ncdu.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_engine_ncdu.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\verify_ncdu.sh`
 
 - [ ] **Step 1: Write the failing engine tests**
 
@@ -311,10 +311,10 @@ git commit -m "feat: add ncdu engine detection and command builder"
 ### Task 3: Parse `ncdu` JSON Export Into Normalized Nodes
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor\tests\fixtures\ncdu_minimal_export.json`
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\ncdu_json.py`
-- Modify: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\models.py`
-- Create: `Z:\Repositories\safe-delete-advisor\tests\test_ncdu_json.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\fixtures\ncdu_minimal_export.json`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\ncdu_json.py`
+- Modify: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\models.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_ncdu_json.py`
 
 - [ ] **Step 1: Write the failing parser test with a fixed fixture**
 
@@ -464,10 +464,10 @@ git commit -m "feat: parse ncdu json exports into normalized nodes"
 ### Task 4: Implement Risk Classification And Compact Reports
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\risk.py`
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\reporting.py`
-- Create: `Z:\Repositories\safe-delete-advisor\tests\test_risk.py`
-- Create: `Z:\Repositories\safe-delete-advisor\tests\test_reporting.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\risk.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\reporting.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_risk.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_reporting.py`
 
 - [ ] **Step 1: Write the failing risk and reporting tests**
 
@@ -557,8 +557,8 @@ git commit -m "feat: add risk classification and compact reports"
 ### Task 5: Build The CLI And Output Writers
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor\src\safe_delete_advisor\cli.py`
-- Create: `Z:\Repositories\safe-delete-advisor\tests\test_cli.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\src\safe_delete_advisor\cli.py`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\tests\test_cli.py`
 
 - [ ] **Step 1: Write the failing CLI smoke test**
 
@@ -613,7 +613,7 @@ from safe_delete_advisor.risk import classify_path
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="safe-delete-advisor")
+    parser = argparse.ArgumentParser(prog="safe-delete-advisor-skill")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     summarize = subparsers.add_parser("summarize-export")
@@ -691,10 +691,10 @@ git commit -m "feat: add summarize-export cli workflow"
 ### Task 6: Add DGX Runtime Wrappers And Perform Live Verification
 
 **Files:**
-- Create: `Z:\Repositories\safe-delete-advisor\scripts\dgx\install_ncdu.sh`
-- Create: `Z:\Repositories\safe-delete-advisor\scripts\dgx\run_audit.sh`
-- Modify: `Z:\Repositories\safe-delete-advisor\README.md`
-- Modify: `Z:\Repositories\safe-delete-advisor\.agent\HANDOFF.md`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\install_ncdu.sh`
+- Create: `Z:\Repositories\safe-delete-advisor-skill\scripts\dgx\run_audit.sh`
+- Modify: `Z:\Repositories\safe-delete-advisor-skill\README.md`
+- Modify: `Z:\Repositories\safe-delete-advisor-skill\.agent\HANDOFF.md`
 
 - [ ] **Step 1: Write the guarded DGX scripts**
 
@@ -785,5 +785,8 @@ git commit -m "feat: add dgx runtime wrappers and live audit flow"
 - **Spec coverage:** covered config, `ncdu` verification path, raw export parsing, compact summarization, risk classification, read-only DGX run, and sudo stop condition.
 - **Placeholder scan:** no `TBD`, `TODO`, or omitted implementation sections remain in this plan.
 - **Type consistency:** the plan uses `Settings`, `EngineInfo`, `NormalizedNode`, `ParsedExport`, `TopLists`, and `main()` consistently across all tasks.
+
+
+
 
 

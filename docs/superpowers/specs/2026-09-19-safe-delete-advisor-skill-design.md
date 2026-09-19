@@ -1,4 +1,4 @@
-# safe-delete-advisor Design
+# safe-delete-advisor-skill Design
 
 ## Goal
 
@@ -19,7 +19,7 @@ The first version is not responsible for deleting files automatically.
 
 - host machine for orchestration: Windows workstation with `Z:` mapped to the DGX home
 - target machine for scan execution: DGX/Linux ARM
-- repository location: `Z:\Repositories\safe-delete-advisor`
+- repository location: `Z:\Repositories\safe-delete-advisor-skill`
 
 ## Core Principles
 
