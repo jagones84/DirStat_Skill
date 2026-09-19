@@ -1,6 +1,9 @@
 ---
-name: "DirStat_Skill"
-description: "Use when auditing disk usage on Windows or Linux and suggesting what a human should review to reclaim space without changing files automatically, especially for caches, model files, trash, and partial downloads."
+name: DirStat_Skill
+description: Use when auditing disk usage on Windows or Linux and suggesting what a human should review to reclaim space without changing files automatically, especially for caches, model files, trash, and partial downloads.
+metadata:
+  emoji: 💾
+  os: [linux, win32]
 ---
 
 # DirStat_Skill
