@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from safe_delete_advisor.engine_windows import build_windows_export
 
 
@@ -16,3 +18,10 @@ def test_build_windows_export_writes_raw_json(tmp_path: Path) -> None:
     assert result.engine_name == "windows-native"
     assert export_path.exists()
     assert '"path"' in export_path.read_text(encoding="utf-8")
+
+
+def test_build_windows_export_rejects_missing_root(tmp_path: Path) -> None:
+    export_path = tmp_path / "windows-export.json"
+
+    with pytest.raises(FileNotFoundError):
+        build_windows_export(target=tmp_path / "missing-root", output_path=export_path)

@@ -3,36 +3,68 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import platform
+import subprocess
 from pathlib import Path
 
 from safe_delete_advisor.config import load_settings
-from safe_delete_advisor.ncdu_json import parse_ncdu_export
+from safe_delete_advisor.engine_ncdu import build_ncdu_export_command, detect_ncdu
+from safe_delete_advisor.engine_windows import build_windows_export_for_targets
+from safe_delete_advisor.logging_utils import configure_run_logger
 from safe_delete_advisor.reporting import build_top_lists
+from safe_delete_advisor.raw_export import parse_export
 from safe_delete_advisor.risk import classify_path
+from safe_delete_advisor.targets import normalize_targets
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="safe-delete-advisor-skill")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    scan = subparsers.add_parser("scan")
+    scan.add_argument("--path", action="append", dest="paths", required=True)
+    scan.add_argument("--output-dir", required=True)
+    scan.add_argument("--engine", default=None)
+    scan.add_argument("--config", default="config/defaults.json")
+
     summarize = subparsers.add_parser("summarize-export")
     summarize.add_argument("--export", required=True)
     summarize.add_argument("--output-dir", required=True)
     summarize.add_argument("--config", required=True)
 
+    audit = subparsers.add_parser("audit")
+    audit.add_argument("--path", action="append", dest="paths", required=True)
+    audit.add_argument("--output-dir", required=True)
+    audit.add_argument("--engine", default=None)
+    audit.add_argument("--config", default="config/defaults.json")
+
     args = parser.parse_args(argv)
+    if args.command == "scan":
+        return _scan(
+            paths=list(args.paths),
+            output_dir=Path(args.output_dir),
+            config_path=Path(args.config),
+            requested_engine=args.engine,
+        )
     if args.command == "summarize-export":
         return _summarize_export(
             export_path=Path(args.export),
             output_dir=Path(args.output_dir),
             config_path=Path(args.config),
         )
+    if args.command == "audit":
+        return _audit(
+            paths=list(args.paths),
+            output_dir=Path(args.output_dir),
+            config_path=Path(args.config),
+            requested_engine=args.engine,
+        )
     return 2
 
 
 def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) -> int:
     settings = load_settings(config_path=config_path)
-    parsed = parse_ncdu_export(export_path)
+    parsed = parse_export(export_path)
     top_lists = build_top_lists(
         parsed.nodes,
         min_bytes=settings.min_bytes,
@@ -49,7 +81,8 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
                 "is_dir": node.is_dir,
                 "risk": classify_path(
                     node.path,
-                    settings.risk_do_not_touch_prefixes,
+                    settings.risk_do_not_touch_prefixes
+                    + settings.windows_do_not_touch_prefixes,
                     settings.risk_needs_inspection_prefixes,
                 ),
             }
@@ -80,6 +113,84 @@ def _summarize_export(export_path: Path, output_dir: Path, config_path: Path) ->
         encoding="utf-8",
     )
     return 0
+
+
+def _scan(
+    paths: list[str],
+    output_dir: Path,
+    config_path: Path,
+    requested_engine: str | None,
+) -> int:
+    settings = load_settings(config_path=config_path)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    logger = configure_run_logger(output_dir / "run.log")
+    engine_name = _resolve_engine_name(settings, requested_engine)
+    platform_name = "windows" if engine_name == "windows-native" else "linux"
+    targets = normalize_targets(
+        requested_paths=paths,
+        auto_discover=False,
+        platform_name=platform_name,
+    )
+    logger.info("scan starting engine=%s targets=%s", engine_name, [item.raw_path for item in targets])
+
+    if engine_name == "windows-native":
+        export_path = output_dir / "raw-export.json"
+        build_windows_export_for_targets(targets=targets, output_path=export_path)
+        logger.info("scan completed export=%s", export_path)
+        return 0
+
+    if engine_name == "ncdu":
+        if len(targets) != 1:
+            raise ValueError("The ncdu engine currently supports one target path at a time")
+        engine_info = detect_ncdu()
+        if engine_info is None:
+            raise RuntimeError("ncdu engine requested but ncdu was not found in PATH")
+        export_path = output_dir / "ncdu-export.json"
+        command = build_ncdu_export_command(
+            binary=engine_info.binary,
+            target=targets[0].resolved_path,
+            output_path=export_path,
+            one_file_system=settings.one_file_system,
+            exclude_patterns=settings.exclude_patterns,
+        )
+        subprocess.run(command, check=True)
+        logger.info("scan completed export=%s", export_path)
+        return 0
+
+    raise ValueError(f"Unsupported engine: {engine_name}")
+
+
+def _audit(
+    paths: list[str],
+    output_dir: Path,
+    config_path: Path,
+    requested_engine: str | None,
+) -> int:
+    scan_exit_code = _scan(
+        paths=paths,
+        output_dir=output_dir,
+        config_path=config_path,
+        requested_engine=requested_engine,
+    )
+    if scan_exit_code != 0:
+        return scan_exit_code
+
+    engine_name = _resolve_engine_name(load_settings(config_path=config_path), requested_engine)
+    export_name = "raw-export.json" if engine_name == "windows-native" else "ncdu-export.json"
+    return _summarize_export(
+        export_path=output_dir / export_name,
+        output_dir=output_dir,
+        config_path=config_path,
+    )
+
+
+def _resolve_engine_name(settings: object, requested_engine: str | None) -> str:
+    if requested_engine:
+        return requested_engine
+    system_name = platform.system().lower()
+    if system_name == "windows":
+        return settings.default_engine_windows
+    return settings.default_engine_linux
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "safe-delete-advisor-skill"
 version = "0.1.0"
-description = "Suggest what to delete safely to reclaim disk space on DGX/Linux hosts"
+description = "Suggest what to delete safely to reclaim disk space on Windows and Linux hosts"
 requires-python = ">=3.12"
 dependencies = []
 

@@ -1,115 +1,181 @@
 # safe-delete-advisor-skill
 
-Tired of wasting tens of GB on forgotten AI models, bloated caches, and files you have not touched since the Cold War? Here is the safe, read-only answer.
+Tired of wasting tens of GB on forgotten AI models, bloated caches, and files you have not touched since the Cold War? This is the safe, read-only answer.
 
 ## Goal
 
-This repository provides a reproducible workflow to:
+`safe-delete-advisor-skill` is a public, cross-platform disk-audit skill and repository.
 
-- scan disk usage on a DGX/Linux host using a system-installed scanner
-- compact the raw scan into AI-friendly summaries
-- classify large paths by deletion risk
-- produce a shortlist for human review before any cleanup
+It helps humans and agents:
 
-Version `v1` targets DGX/Linux ARM and uses `ncdu` as the initial scan engine.
+- scan one or more explicit paths on Windows or Linux
+- keep raw scan data on disk instead of dumping it into an LLM
+- generate compact summaries first
+- classify large paths into `delete first`, `inspect before delete`, and `do not touch`
+- produce a shortlist for review before any cleanup
+
+It does **not** delete automatically.
+
+## Platforms
+
+- Windows: native Python scanner, no mandatory third-party dependency
+- Linux: `ncdu` engine when available
+- Linux ARM64 DGX: supported through the same Linux engine plus helper scripts
 
 ## Skill Identity
 
-This repository is also packaged as an agent skill.
-
 - skill name: `safe-delete-advisor-skill`
 - skill path: `skills/safe-delete-advisor-skill/SKILL.md`
-- agent entrypoint: `AGENTS.md`
-
-The public repository and skill identity use `safe-delete-advisor-skill`.
-The Python import package stays `safe_delete_advisor` for runtime stability.
-
-## Non-Goals
-
-- shipping `ncdu` binaries inside the repository
-- automatic deletion in the first version
-- broad cross-platform support in the first version
-- feeding the complete filesystem dump directly to an LLM
-
-## Architecture
-
-The repository is split into replaceable modules:
-
-- `scan engine`: invokes a system tool such as `ncdu`
-- `normalizer`: turns raw scan data into a stable internal shape
-- `risk classifier`: labels candidates as `safe to review`, `needs inspection`, or `do not touch`
-- `report generator`: emits compact summaries and machine-readable outputs
-
-This keeps the core pipeline reusable even if the scan engine changes later, including a future partial Windows adapter.
-
-## Repository Layout
-
-- `.agent/`: local-only operator memory, ignored from git
-- `.trae/skills/`: repository-local agent skills
-- `config/`: thresholds, exclusions, policy settings
-- `docs/`: specs and longer-form design notes
-- `outputs/`: dated audit runs
-- `scripts/`: launchers and operational helpers
-- `src/`: parsers, classifiers, report generation
-- `tests/`: focused tests for parser and policy logic
-- `trash/`: temporary or discarded experiments
-
-## What Stays Out Of Git
-
-- `.agent/`: volatile local memory and handoff notes
-- `outputs/`: generated audit results
-- `trash/`: disposable scratch space
-
-## What Stays In Git
-
-- `tests/`: they prove the parser and risk logic work
-- `.trae/skills/`: core part of the product identity
-- `AGENTS.md`: public agent entrypoint for the repository
-
-## Planned Workflow
-
-1. Verify `ncdu` availability on the DGX host.
-2. Run a read-only scan and save a raw export.
-3. Convert the raw export into compact summaries.
-4. Let the AI inspect only the top consumers and threshold hits.
-5. Run safety checks on shortlisted paths.
-6. Produce a reviewable candidate list.
-7. Delete nothing until the candidate list is reviewed.
+- repository agent entrypoint: `AGENTS.md`
+- Python package: `safe_delete_advisor`
 
 ## Token Strategy
 
-The repository is explicitly designed to avoid wasting tokens:
+This repo is explicitly built to avoid stupid token burn:
 
-- raw scan files stay on disk
-- the AI reads summaries first, not raw dumps
-- drill-down is performed one subtree at a time
-- reports are limited by top `N`, thresholds, and risk buckets
-- the default review path starts from `summary.md`, `top_dirs.csv`, `top_files.csv`, and `candidates.json`, not the raw `ncdu-export.json`
+- raw exports stay on disk
+- the first pass reads `summary.md`, `top_dirs.csv`, `top_files.csv`, and `candidates.json`
+- reviews start from top `N` and size thresholds
+- drill-down happens path by path, not by dumping the whole tree
+- agents should read raw exports only when the compact outputs are missing or inconsistent
 
-## Security
+## Output Contract
 
-- do not store passwords or secrets in this repository
-- if system installation requires `sudo` and no passwordless path exists, the workflow must stop and request operator input
-- the first implementation must remain read-only
+Every audit run writes a bundle under `outputs/<stamp>_audit/`:
 
-## Commands
+- raw export file
+- `summary.md`
+- `top_dirs.csv`
+- `top_files.csv`
+- `candidates.json`
+- `run.log`
 
-- prepare Linux scripts on DGX: `ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/prepare_linux_scripts.sh`
-- verify `ncdu`: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/verify_ncdu.sh`
-- guarded install attempt: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/install_ncdu.sh`
-- live audit run: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/run_audit.sh`
-- show latest audit outputs: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/show_latest_audit.sh`
-- find safer deletion candidates: `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/dgx/find_safe_candidates.sh`
+## Installation
+
+### Python
+
+```bash
+python -m pip install -e .
+```
+
+### Linux `ncdu`
+
+Install `ncdu` with your distribution package manager or use the helper script in `scripts/linux/install_ncdu.sh`.
+
+## Quick Start
+
+### Windows
+
+Audit a local drive:
+
+```bash
+python -m safe_delete_advisor.cli audit --path C:\ --output-dir outputs\win_c_audit --config config\defaults.json
+```
+
+Audit multiple targets in one run:
+
+```bash
+python -m safe_delete_advisor.cli audit --path C:\ --path D:\models --output-dir outputs\win_multi_audit --config config\defaults.json
+```
+
+### Linux
+
+Audit one path with `ncdu`:
+
+```bash
+python3 -m safe_delete_advisor.cli audit --path /home --engine ncdu --output-dir outputs/linux_home_audit --config config/defaults.json
+```
+
+### Linux Helper Scripts
+
+The repository also ships Linux-only convenience wrappers:
+
+- `scripts/linux/prepare_linux_scripts.sh`
+- `scripts/linux/verify_ncdu.sh`
+- `scripts/linux/install_ncdu.sh`
+- `scripts/linux/run_audit.sh`
+- `scripts/linux/show_latest_audit.sh`
+- `scripts/linux/find_safe_candidates.sh`
+
+Example on DGX:
+
+```bash
+ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/prepare_linux_scripts.sh
+ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/run_audit.sh
+```
+
+## Verified Runs
+
+Real runs already verified with this repository:
+
+- Windows host:
+  - `python -m safe_delete_advisor.cli audit --path C:\Windows\Temp --path D:\ --path E:\ --path F:\ --output-dir outputs\20260919_win_multi_real --config config\defaults.json`
+  - surfaced large review targets such as `docker_data.vhdx`, Steam/GamePass archives, `.safetensors`, `.gguf`, and other large assets across multiple drives
+- Linux ARM64 DGX:
+  - `ssh dgx bash /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/prepare_linux_scripts.sh`
+  - `ssh dgx /home/jagones/Repositories/safe-delete-advisor-skill/scripts/linux/run_audit.sh`
+  - latest verified compact report: `outputs/20260919_1457_audit`
+  - surfaced both `delete first` candidates like `.filepart` leftovers and `inspect before delete` model assets under user-owned paths
+
+## Risk Buckets
+
+- `delete first`
+  - temp files
+  - cache blobs
+  - trash contents
+  - partial downloads like `.filepart`
+- `inspect before delete`
+  - user-owned model folders
+  - checkpoints, `.safetensors`, `.gguf`
+  - large application inputs
+- `do not touch`
+  - system-owned paths
+  - package stores
+  - swap, Docker backing storage, OS directories
+
+## Repository Layout
+
+- `skills/safe-delete-advisor-skill/`: public skill entrypoint
+- `config/`: thresholds, exclusions, policy settings
+- `docs/`: specs and implementation plans
+- `outputs/`: generated audit runs
+- `scripts/linux/`: Linux helper scripts
+- `src/`: engines, parsers, classifier, reporting, CLI
+- `tests/`: focused automated tests
+- `.agent/`: local operator memory, ignored from git
+- `trash/`: disposable experiments, ignored from git
+
+## Git Hygiene
+
+Ignored from git:
+
+- `.agent/`
+- `outputs/`
+- `trash/`
+- virtualenvs, logs, editor noise
+
+Kept in git:
+
+- `tests/`
+- `skills/`
+- `AGENTS.md`
+- `README.md`
+- source, config, and docs
+
+## Safety Rules
+
+- never store secrets in the repository
+- never delete automatically
+- prefer compact outputs over raw dumps
+- stop loudly if the requested engine is missing
+- treat large user assets as review targets, not automatic junk
 
 ## Status
 
-- repository skeleton created
-- design spec written
-- implementation completed for the current `v1` scope
-- Python pipeline implemented and local tests passing: `8 passed`
-- DGX verify completed: `ncdu` installed and detected
-- live audit run completed successfully
-- post-rename DGX verification completed successfully
-- latest verified run on the public skill path: `/home/jagones/Repositories/safe-delete-advisor-skill/outputs/20260919_1404_audit`
-- safe-candidate helper identifies large cache, partial-download, and trash files
-- skill packaging added for agent reuse
+- cross-platform design spec written
+- cross-platform implementation plan written
+- shared target abstraction implemented
+- Windows native scan engine implemented
+- raw export bridge implemented for Windows and `ncdu`
+- recursive `ncdu` directory sizing fixed for meaningful `top_dirs.csv` results
+- generic CLI now supports `scan`, `summarize-export`, and `audit`

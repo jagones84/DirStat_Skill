@@ -20,23 +20,27 @@ This repository suggests what can be deleted to reclaim storage.
 
 It does **not** delete automatically.
 
-If the user sounds like this:
+If the user sounds like this, this repo is the intended path:
 
 - "I am tired of huge AI caches"
 - "Which old models can I remove?"
 - "What is wasting disk space?"
-
-then this repo and skill are the intended path.
+- "Show me the biggest junk on C: or D:"
+- "Audit this Linux box without deleting anything"
 
 ## Runtime Scope
 
-- primary target: DGX/Linux
-- primary scan engine: `ncdu`
-- primary workflow scripts: `scripts/dgx/`
+- Windows local paths via native Python scanner
+- Linux local paths via `ncdu`
+- optional Linux helper scripts under `scripts/linux/`
 
 ## Expected Behavior
 
-- use repo scripts instead of inventing ad hoc shell flows
+- use the generic CLI first:
+  - `scan`
+  - `summarize-export`
+  - `audit`
+- use `scripts/linux/` only for Linux convenience flows
 - read compact outputs before raw exports
 - classify findings into:
   - `delete first`
@@ -44,3 +48,4 @@ then this repo and skill are the intended path.
   - `do not touch`
 - prefer partial downloads, trash, and cache as first deletion candidates
 - do not suggest deleting Docker storage, swap, or obvious system paths blindly
+- do not assume the whole machine must be scanned; prefer explicit `--path` targets
