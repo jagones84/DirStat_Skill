@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- `audit`'s dominant-space walk found no roots (root detection used `_parent_key(...) is None`, which never matches a real path), so `audit` produced zero dominant-space findings. Root detection now checks whether a node's parent is absent from the scan set.
+
+### Added
+- `examples/`: reproducible tiny demo (`make-sample-data.sh`, `demo-config.json`) and a committed `demo-audit/` bundle showing a real dominant-space finding.
+
 ## [0.1.0] - 2026-09-19
 ### Added
 - Public cross-platform `DirStat_Skill` repository layout for Windows and Linux hosts.

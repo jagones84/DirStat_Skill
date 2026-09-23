@@ -1,0 +1,15 @@
+[
+  {
+    "path": "examples/sample-data",
+    "dsize": 479232,
+    "is_dir": true,
+    "analysis_kind": "dominant space",
+    "attention_level": "review carefully",
+    "review_reason": "directory dominates parent space under the dominant-space walk",
+    "evidence": "selected by dominant-space walk with no nearby references found",
+    "dependency_check_confidence": "low",
+    "selection_source": "dominant_subtree",
+    "group_key": "",
+    "configured_dominant_percent": 0.8
+  }
+]

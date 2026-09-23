@@ -1,0 +1,2 @@
+path,dsize,is_dir,analysis_kind,attention_level,review_reason,evidence,dependency_check_confidence,selection_source,group_key,configured_dominant_percent
+examples/sample-data,479232,True,dominant space,review carefully,directory dominates parent space under the dominant-space walk,selected by dominant-space walk with no nearby references found,low,dominant_subtree,,0.8

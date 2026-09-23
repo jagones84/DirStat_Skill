@@ -57,7 +57,8 @@ def select_dominant_candidates_for_roots(
     min_candidate_bytes: int,
 ) -> list[NormalizedNode]:
     children_by_parent = _build_children_index(nodes)
-    roots = [node for node in nodes if _parent_key(node.path) is None]
+    node_keys = {_path_key(node.path) for node in nodes}
+    roots = [node for node in nodes if _parent_key(node.path) not in node_keys]
     selected: list[NormalizedNode] = []
     for root in sorted(roots, key=lambda node: node.dsize, reverse=True):
         selected.extend(
