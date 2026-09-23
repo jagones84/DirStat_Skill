@@ -248,6 +248,7 @@ Dependency checks are cheap and local by default:
 - `SKILL.md`: public skill entrypoint
 - `config/`: thresholds, exclusions, policy settings
 - `docs/`: specs and implementation plans
+- `examples/`: a real, reproducible audit demo (see [examples/README.md](examples/README.md))
 - `outputs/`: generated audit runs
 - `scripts/linux/`: Linux helper scripts
 - `scripts/windows/`: Windows helper scripts
