@@ -1,10 +1,13 @@
 from pathlib import Path
 
+import sys
+
 import pytest
 
 from dirstat_skill.targets import ScanTarget, normalize_targets
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="windows-native engine requires a Windows host")
 def test_normalize_targets_keeps_multiple_explicit_paths() -> None:
     targets = normalize_targets(
         requested_paths=["C:\\", "D:\\models", "F:\\"],

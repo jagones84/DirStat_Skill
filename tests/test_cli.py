@@ -89,6 +89,7 @@ def test_python_module_cli_writes_summary_files(tmp_path: Path) -> None:
     assert (output_dir / "summary.md").exists()
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="windows-native engine requires a Windows host")
 def test_cli_audit_command_writes_recursive_review_bundle(tmp_path: Path) -> None:
     target_root = tmp_path / "audit-root"
     target_root.mkdir()
@@ -119,6 +120,7 @@ def test_cli_audit_command_writes_recursive_review_bundle(tmp_path: Path) -> Non
     assert (output_dir / "run.log").exists()
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="windows-native engine requires a Windows host")
 def test_cli_summarize_export_accepts_dominant_percent_override(tmp_path: Path) -> None:
     target_root = tmp_path / "audit-root"
     target_root.mkdir()
@@ -149,6 +151,7 @@ def test_cli_summarize_export_accepts_dominant_percent_override(tmp_path: Path) 
     assert all(item["configured_dominant_percent"] == 0.67 for item in payload)
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="windows-native engine requires a Windows host")
 def test_cli_audit_command_rejects_missing_windows_target(tmp_path: Path) -> None:
     output_dir = tmp_path / "audit-run"
 
@@ -185,6 +188,7 @@ def test_cli_rejects_ncdu_for_windows_style_path(tmp_path: Path) -> None:
         )
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="windows-native engine requires a Windows host")
 def test_cli_rejects_windows_native_for_linux_style_path(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="Linux-style paths require a Linux runtime"):
         main(

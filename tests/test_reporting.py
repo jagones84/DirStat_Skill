@@ -132,7 +132,7 @@ def test_build_analysis_findings_emits_analysis_kind_and_evidence(tmp_path: Path
         selected_nodes=nodes,
         all_nodes=nodes,
         protected_prefixes=["/etc", "/usr", "/var/lib"],
-        inspection_prefixes=[str(tmp_path)],
+        inspection_prefixes=["/data"],
         nearby_reference_extensions=[".json", ".yaml"],
         max_nearby_reference_files=5,
         dominant_percent=0.8,
@@ -225,13 +225,10 @@ def test_build_analysis_findings_marks_system_storage_as_path_safety() -> None:
 def test_build_analysis_findings_marks_user_model_as_dominant_space(
     tmp_path: Path,
 ) -> None:
-    model_dir = tmp_path / "models"
-    model_dir.mkdir()
-    model_path = model_dir / "model.gguf"
-    model_path.write_bytes(b"x" * 8)
-
+    # A user-owned model on a normal (non cache/temp/trash) path must be
+    # surfaced as dominant space, independent of the host temporary dir.
     nodes = [
-        NormalizedNode(path=str(model_path), name="model.gguf", is_dir=False, asize=0, dsize=2000),
+        NormalizedNode(path="/data/models/model.gguf", name="model.gguf", is_dir=False, asize=0, dsize=2000),
     ]
 
     findings = build_analysis_findings(

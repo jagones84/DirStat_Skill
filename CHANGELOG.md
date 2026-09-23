@@ -4,6 +4,7 @@
 
 ### Fixed
 - `audit`'s dominant-space walk found no roots (root detection used `_parent_key(...) is None`, which never matches a real path), so `audit` produced zero dominant-space findings. Root detection now checks whether a node's parent is absent from the scan set.
+- Test portability: the five `windows-native` tests are now skipped off-Windows, and the dominant-space reporting test no longer depends on the host temporary path (Linux: 37 passed, 5 skipped).
 
 ### Added
 - `examples/`: reproducible tiny demo (`make-sample-data.sh`, `demo-config.json`) and a committed `demo-audit/` bundle showing a real dominant-space finding.
