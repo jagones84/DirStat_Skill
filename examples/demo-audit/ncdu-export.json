@@ -1,9 +1,9 @@
-[1,2,{"progname":"ncdu","progver":"1.19","timestamp":1790155816},
+[1,2,{"progname":"ncdu","progver":"1.19","timestamp":1790156510},
 [{"name":"examples/sample-data","asize":4096,"dsize":4096,"dev":66306},
-[{"name":"reports","asize":4096,"dsize":4096},
-{"name":"q1.txt","asize":18,"dsize":4096},
-{"name":"notes.md","asize":6,"dsize":4096}],
+[{"name":"backup","asize":4096,"dsize":4096},
 [{"name":"models","asize":4096,"dsize":4096},
-{"name":"model.gguf","asize":150000,"dsize":151552}],
-[{"name":"cache","asize":4096,"dsize":4096},
-{"name":"blob.bin","asize":300000,"dsize":303104}]]]
+{"name":"model.gguf","asize":100000,"dsize":102400}]],
+[{"name":"models","asize":4096,"dsize":4096},
+{"name":"model.gguf","asize":100000,"dsize":102400}],
+[{"name":"downloads","asize":4096,"dsize":4096},
+{"name":"pack.bin.part","asize":900000,"dsize":901120}]]]

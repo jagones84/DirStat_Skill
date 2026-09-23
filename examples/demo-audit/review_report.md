@@ -4,7 +4,7 @@
 > DirStat_Skill never changes files automatically. It only explains what a human should review.
 
 - root: `examples/sample-data`
-- total_findings: 1
+- total_findings: 3
 - configured_dominant_percent: `0.8`
 
 ## How To Read This
@@ -18,15 +18,7 @@
 
 Shows the paths that explain most space under the configured dominant-space threshold.
 
-### `examples/sample-data`
-
-- size_bytes: `479232`
-- size_human: `468.0 KB`
-- attention_level: `review carefully`
-- review_reason: directory dominates parent space under the dominant-space walk
-- evidence: selected by dominant-space walk with no nearby references found
-- confidence: `low`
-- selection_source: `dominant_subtree`
+- none
 
 ## Path Safety
 
@@ -44,13 +36,41 @@ Shows paths with local evidence pointing to nearby configs, manifests, or workfl
 
 Shows paths matched by obvious signatures such as cache, temp, trash, or incomplete-download patterns.
 
-- none
+### `examples/sample-data/downloads/pack.bin.part`
+
+- size_bytes: `901120`
+- size_human: `880.0 KB`
+- attention_level: `review first`
+- review_reason: incomplete download pattern surfaced by the dominant-space walk
+- evidence: matched partial-download suffix
+- confidence: `high`
+- selection_source: `dominant_leaf`
 
 ## Probable Duplicates
 
 Shows large assets that look duplicated by basename, size, and extension across different directories.
 
-- none
+### `examples/sample-data/backup/models/model.gguf`
+
+- size_bytes: `102400`
+- size_human: `100.0 KB`
+- attention_level: `review carefully`
+- review_reason: large asset appears structurally duplicated across different directories
+- evidence: same basename and same size across 2 directories
+- confidence: `medium`
+- group_key: `duplicate:model.gguf:102400`
+- selection_source: `duplicate_cluster`
+
+### `examples/sample-data/models/model.gguf`
+
+- size_bytes: `102400`
+- size_human: `100.0 KB`
+- attention_level: `review carefully`
+- review_reason: large asset appears structurally duplicated across different directories
+- evidence: same basename and same size across 2 directories
+- confidence: `medium`
+- group_key: `duplicate:model.gguf:102400`
+- selection_source: `duplicate_cluster`
 
 ## Protected Huge Hotspots
 

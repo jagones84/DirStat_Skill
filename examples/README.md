@@ -3,18 +3,31 @@
 ## `demo-audit/` — a real (tiny) audit run
 
 This folder holds the **actual output** of one DirStat_Skill run, so you can see
-the shape of a review bundle without scanning gigabytes yourself.
+the shape of a review bundle — and the kind of advice it gives — without
+scanning gigabytes yourself.
 
 `demo-audit/` was produced from the small synthetic tree created by
 `make-sample-data.sh`:
 
-```
-~468 KB total
+```text
+~1.1 MB total
 sample-data/
-├── cache/blob.bin        (300 KB)
-├── models/model.gguf     (150 KB)
-└── reports/{q1.txt, notes.md}
+├── models/model.gguf            (100 KB)
+├── backup/models/model.gguf     (100 KB)   # same name+size as the above
+└── downloads/pack.bin.part      (880 KB)   # incomplete download
 ```
+
+### What it finds (3 findings)
+
+- **Signature Heuristics** → `downloads/pack.bin.part`
+  - attention: `review first` · confidence: `high`
+  - reason: *incomplete download pattern surfaced by the dominant-space walk*
+- **Probable Duplicates** → `models/model.gguf` and `backup/models/model.gguf`
+  - attention: `review carefully` · confidence: `medium`
+  - evidence: *same basename and same size across 2 directories*
+
+That is the point of the tool: it tells you **what is likely redundant or
+useless** (incomplete downloads, duplicated large assets), not just what is big.
 
 ### Reproduce it
 
@@ -30,11 +43,10 @@ python3 -m dirstat_skill.cli audit \
 ### Notes on `demo-config.json`
 
 - The stock `config/defaults.json` targets real disks: **`min_candidate_bytes = 1 GiB`**,
-  so a small demo tree yields zero findings. `demo-config.json` lowers the thresholds to
-  **64 KiB** purely so this tiny tree produces findings.
+  so a tiny demo tree yields zero findings. `demo-config.json` lowers the thresholds to
+  **64 KiB** purely so this small tree produces findings.
 - `nearby_reference_extensions` is set to `[]` so the demo focuses on the
-  **dominant-space walk** (otherwise the sibling scripts here count as nearby references
-  and the top finding is classified as `nearby references` instead).
+  volume/redundancy analysis instead of nearby-reference hints.
 - Everything else matches `config/defaults.json`.
 
 The paths inside `demo-audit/` are written **repo-relative** (the raw run stores absolute
