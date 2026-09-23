@@ -4,7 +4,7 @@
 
 For read-only disk-usage analysis and human review suggestions, load:
 
-- `skills/DirStat_Skill/SKILL.md`
+- `SKILL.md`
 
 ## Start Here
 

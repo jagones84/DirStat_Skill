@@ -23,7 +23,7 @@ It helps humans and agents:
 ## Identity
 
 - public repository name: `DirStat_Skill`
-- skill path: `skills/DirStat_Skill/SKILL.md`
+- skill path: `SKILL.md`
 - repository agent entrypoint: `AGENTS.md`
 - Python package: `dirstat_skill`
 
@@ -245,7 +245,7 @@ Dependency checks are cheap and local by default:
 
 ## Repository Layout
 
-- `skills/DirStat_Skill/`: public skill entrypoint
+- `SKILL.md`: public skill entrypoint
 - `config/`: thresholds, exclusions, policy settings
 - `docs/`: specs and implementation plans
 - `outputs/`: generated audit runs
