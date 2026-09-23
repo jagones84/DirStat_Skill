@@ -1,5 +1,6 @@
 ---
 name: DirStat_Skill
+version: 1.0.0
 description: Use when auditing disk usage on Windows or Linux and suggesting what a human should review to reclaim space without changing files automatically, especially for caches, model files, trash, and partial downloads.
 metadata:
   emoji: 💾
@@ -165,8 +166,8 @@ bash scripts/linux/run_audit.sh
 For DGX over SSH:
 
 ```bash
-ssh dgx bash /home/jagones/Repositories/DirStat_Skill/scripts/linux/prepare_linux_scripts.sh
-ssh dgx /home/jagones/Repositories/DirStat_Skill/scripts/linux/run_audit.sh
+ssh dgx bash {baseDir}/scripts/linux/prepare_linux_scripts.sh
+ssh dgx {baseDir}/scripts/linux/run_audit.sh
 ```
 
 ### 5.1 Optional Windows Helper Workflow
